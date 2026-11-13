@@ -80,7 +80,7 @@
             type="text"
             placeholder="Search movies, series, friends..."
             oninput="renderApp()"
-            class="bg-[#14181c] text-white text-sm pl-8 pr-3 py-1.5 rounded-md border border-lbBorder focus:outline-none focus:border-lbGreen w-48 sm:w-64"
+            class="bg-[#14181c] text-white text-sm pl-8 pr-3 py-1.5 rounded-md border border-lbBorder focus:outline-none focus:border-lbGreen w-44 sm:w-60"
           />
         </div>
 
@@ -92,15 +92,19 @@
           <span>Log Show</span>
         </button>
 
-        <!-- Current User Switcher Button -->
+        <!-- Account / Google Auth Button -->
         <button
           onclick="openProfileModal()"
           class="flex items-center gap-2 bg-[#14181c] hover:bg-lbBorder border border-lbBorder px-3 py-1.5 rounded-md transition"
-          title="Switch or change your profile name"
+          title="Account & Sign-In Settings"
         >
-          <span id="currentUserAvatar" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white bg-emerald-600">V</span>
-          <span id="currentUserName" class="text-white text-sm font-medium">Vysakh</span>
-          <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+          <img id="currentUserPhoto" src="" alt="" class="w-6 h-6 rounded-full object-cover hidden" />
+          <span id="currentUserAvatar" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white bg-emerald-600">G</span>
+          <div class="text-left leading-tight">
+            <span id="currentUserName" class="text-white text-xs font-bold block">Guest</span>
+            <span id="currentAccountBadge" class="text-[10px] text-amber-400 block">30d Guest</span>
+          </div>
+          <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 ml-0.5"></i>
         </button>
       </div>
     </div>
@@ -111,7 +115,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-lbBorder pb-4">
       <div>
         <h1 class="text-white text-2xl font-bold tracking-tight">Completed Movies & Series</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Click any poster cover to read all friend reviews or add your own rating.</p>
+        <p class="text-xs text-gray-400 mt-0.5">Sign in with Google for a permanent profile, or browse as a 30-day temporary Guest.</p>
       </div>
 
       <!-- Filter Tabs -->
@@ -164,15 +168,14 @@
   <footer class="border-t border-lbBorder mt-12 py-6 text-center text-xs text-gray-500">
     <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
       <span>CineBoxd — Shared Friends Movie & Series Diary</span>
-      <span>Powered by Firebase Realtime Firestore</span>
+      <span>Google Accounts: Permanent • Anonymous Guest Accounts: Auto-Expire in 30 Days</span>
     </div>
   </footer>
 
-  <!-- SHOW DETAILS & REVIEWS MODAL (WHEN CLICKING A COVER) -->
+  <!-- SHOW DETAILS & REVIEWS MODAL -->
   <div id="detailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-center justify-center p-4 overflow-y-auto">
     <div class="bg-lbCard border border-lbBorder rounded-xl max-w-3xl w-full overflow-hidden shadow-2xl my-8">
       <div class="p-6 flex flex-col md:flex-row gap-6">
-        <!-- Left Cover Image -->
         <div class="w-40 sm:w-48 flex-shrink-0 mx-auto md:mx-0">
           <div class="aspect-[2/3] rounded-lg overflow-hidden border border-lbBorder shadow-lg bg-[#14181c]">
             <img id="detailCover" src="" alt="Poster" class="w-full h-full object-cover" />
@@ -182,11 +185,10 @@
             class="w-full mt-3 bg-lbGreen hover:bg-[#00c448] text-black font-bold text-xs py-2.5 px-3 rounded-md transition flex items-center justify-center gap-1.5"
           >
             <i class="fa-solid fa-pen-to-square"></i>
-            <span>Add / Edit My Review</span>
+            <span>Add My Review</span>
           </button>
         </div>
 
-        <!-- Right Info & Friend Reviews -->
         <div class="flex-1 flex flex-col justify-between">
           <div>
             <div class="flex items-start justify-between gap-3">
@@ -202,14 +204,12 @@
               </button>
             </div>
 
-            <!-- Average Rating Bar -->
             <div class="flex items-center gap-3 mt-3 bg-[#14181c] px-3.5 py-2.5 rounded-lg border border-lbBorder">
               <div id="detailAvgStars" class="text-lbGreen text-base flex items-center gap-0.5"></div>
               <span id="detailAvgNumber" class="text-white font-bold text-sm">4.5 / 5</span>
               <span id="detailReviewCount" class="text-xs text-gray-400 ml-auto">3 friend reviews</span>
             </div>
 
-            <!-- Reviews List -->
             <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 mt-5 mb-2.5 border-b border-lbBorder pb-1.5">
               Reviews Logged by Friends
             </h3>
@@ -233,7 +233,6 @@
         </button>
       </div>
 
-      <!-- Quick Presets -->
       <div class="mb-4">
         <span class="text-[11px] uppercase tracking-wider text-gray-400 block mb-1.5">Quick Fill Popular Show (Optional):</span>
         <div class="flex flex-wrap gap-1.5">
@@ -270,7 +269,6 @@
           </div>
         </div>
 
-        <!-- 5-Star Selector & Heart Like -->
         <div class="flex items-center justify-between bg-[#14181c] p-3 rounded-lg border border-lbBorder">
           <div>
             <label class="block text-xs font-semibold text-gray-300 mb-1">Your Rating (Max 5 Stars) *</label>
@@ -296,7 +294,10 @@
         </div>
 
         <div class="flex items-center justify-between pt-2">
-          <span class="text-xs text-gray-400">Posting as: <strong id="postingAsLabel" class="text-white">Vysakh</strong></span>
+          <div>
+            <span class="text-xs text-gray-400">Posting as: <strong id="postingAsLabel" class="text-white">Guest</strong></span>
+            <span id="postingExpiryNotice" class="block text-[11px] text-amber-400">Guest reviews expire after 30 days</span>
+          </div>
           <div class="flex gap-2">
             <button type="button" onclick="closeLogModal()" class="px-4 py-2 rounded text-xs font-semibold text-gray-300 hover:bg-lbBorder">Cancel</button>
             <button type="submit" class="bg-lbGreen hover:bg-[#00c448] text-black font-bold text-xs px-5 py-2 rounded shadow">Save Entry</button>
@@ -306,36 +307,80 @@
     </div>
   </div>
 
-  <!-- MULTI-USER PROFILE SWITCHER MODAL -->
+  <!-- AUTHENTICATION & ACCOUNT MODAL -->
   <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-lbCard border border-lbBorder rounded-xl max-w-md w-full p-6 shadow-2xl">
       <div class="flex items-center justify-between border-b border-lbBorder pb-3 mb-4">
-        <h2 class="text-white font-bold text-base">Switch Active User / Friend Profile</h2>
+        <h2 class="text-white font-bold text-base flex items-center gap-2">
+          <i class="fa-solid fa-user-shield text-lbGreen"></i>
+          <span>User Account & Authentication</span>
+        </h2>
         <button onclick="closeProfileModal()" class="text-gray-400 hover:text-white">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <p class="text-xs text-gray-400 mb-3">
-        Choose your name so any movie or series you log is credited to you:
-      </p>
+      <!-- Current Account Status Card -->
+      <div class="bg-[#14181c] border border-lbBorder rounded-lg p-4 mb-4">
+        <div class="flex items-center gap-3">
+          <img id="modalUserPhoto" src="" alt="" class="w-11 h-11 rounded-full object-cover hidden" />
+          <span id="modalUserAvatar" class="w-11 h-11 rounded-full flex items-center justify-center text-base font-bold text-white bg-emerald-600">G</span>
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <h3 id="modalUserName" class="text-white font-bold text-sm">Guest</h3>
+              <span id="modalAccountTypePill" class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/40">30-Day Guest</span>
+            </div>
+            <p id="modalUserEmailOrExpiry" class="text-xs text-gray-400 mt-0.5">Temporary anonymous account</p>
+          </div>
+        </div>
+      </div>
 
-      <div class="grid grid-cols-2 gap-2 mb-4" id="quickFriendsGrid"></div>
+      <!-- Google Sign-In Section -->
+      <div id="googleSignInSection" class="mb-5">
+        <button
+          type="button"
+          onclick="signInWithGoogleAccount()"
+          class="w-full bg-white hover:bg-gray-100 text-gray-900 font-bold text-sm py-2.5 px-4 rounded-lg flex items-center justify-center gap-2.5 shadow transition"
+        >
+          <i class="fa-brands fa-google text-red-500 text-base"></i>
+          <span>Sign in with Google (Permanent Account)</span>
+        </button>
+        <p class="text-[11px] text-gray-400 text-center mt-2">
+          Signing in with Google saves your reviews permanently and links your Google profile picture.
+        </p>
+      </div>
 
-      <form onsubmit="saveCustomProfile(event)" class="border-t border-lbBorder pt-4">
-        <label class="block text-xs font-semibold text-gray-300 mb-1.5">Or Enter Your Own Name:</label>
+      <!-- Google Sign-Out Section (Hidden when Guest) -->
+      <div id="googleSignOutSection" class="hidden mb-5">
+        <button
+          type="button"
+          onclick="signOutToGuest()"
+          class="w-full bg-red-950/60 hover:bg-red-900/70 text-red-200 border border-red-500/40 font-semibold text-xs py-2 px-4 rounded-lg transition"
+        >
+          <i class="fa-solid fa-right-from-bracket mr-1.5"></i>Sign Out (Switch to 30-Day Guest Mode)
+        </button>
+      </div>
+
+      <!-- Customize Display Nickname (For Guest or Custom Display Name) -->
+      <form onsubmit="saveCustomNickname(event)" class="border-t border-lbBorder pt-4">
+        <label class="block text-xs font-semibold text-gray-300 mb-1.5">
+          Set / Update Display Nickname:
+        </label>
         <div class="flex gap-2">
           <input
             id="customUserNameInput"
             type="text"
             required
-            placeholder="Enter your name..."
+            placeholder="e.g. Vysakh, Arjun, Meera..."
             class="flex-1 bg-[#14181c] text-white text-sm px-3 py-2 rounded border border-lbBorder focus:outline-none focus:border-lbGreen"
           />
           <button type="submit" class="bg-lbGreen text-black font-bold text-xs px-4 py-2 rounded">
-            Set Profile
+            Update Name
           </button>
         </div>
+        <p class="text-[11px] text-gray-500 mt-2">
+          Note: Anonymous guest accounts and their reviews automatically expire 30 days after creation.
+        </p>
       </form>
     </div>
   </div>
@@ -343,10 +388,25 @@
   <!-- FIREBASE & APPLICATION LOGIC -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      linkWithPopup,
+      signInAnonymously,
+      signOut,
+      onAuthStateChanged,
+      deleteUser
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      deleteDoc,
+      doc,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // YOUR LIVE FIREBASE CONFIGURATION
     const firebaseConfig = {
       apiKey: "AIzaSyBLwi5u_B7stI-RvSCB-ohcXGqLUIx23rg",
       authDomain: "cineboxd-app.firebaseapp.com",
@@ -357,9 +417,12 @@
       measurementId: "G-KTXGHR18HS"
     };
 
+    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const googleProvider = new GoogleAuthProvider();
     const reviewsCollectionRef = collection(db, "cineboxd_reviews");
 
     // STATE
@@ -371,14 +434,15 @@
     let currentlyOpenShowKey = null;
     let useLocalStorageFallback = false;
 
-    const PRESET_FRIENDS = [
-      { name: "Vysakh", color: "#059669" },
-      { name: "Arjun", color: "#2563eb" },
-      { name: "Meera", color: "#db2777" },
-      { name: "Rohan", color: "#d97706" }
-    ];
-
-    let currentUser = JSON.parse(localStorage.getItem("cineboxd_active_user")) || PRESET_FRIENDS[0];
+    let currentUser = {
+      uid: "local_guest",
+      name: localStorage.getItem("cineboxd_guest_nickname") || "Guest",
+      email: "",
+      photoURL: "",
+      color: "#059669",
+      isAnonymous: true,
+      expiresAt: Date.now() + THIRTY_DAYS_MS
+    };
 
     const SEED_REVIEWS = [
       {
@@ -391,19 +455,9 @@
         reviewText: "The docking scene paired with Hans Zimmer's 'No Time for Caution' organ score is pure cinema history.",
         userName: "Vysakh",
         userColor: "#059669",
+        isAnonymous: false,
+        expiresAt: null,
         createdAt: Date.now() - 3600000 * 24
-      },
-      {
-        title: "Interstellar",
-        type: "Movie",
-        year: "2014",
-        coverUrl: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
-        rating: 4,
-        liked: true,
-        reviewText: "Visually breathtaking and emotionally heavy. Gets better on every rewatch.",
-        userName: "Arjun",
-        userColor: "#2563eb",
-        createdAt: Date.now() - 3600000 * 12
       },
       {
         title: "Severance",
@@ -415,20 +469,142 @@
         reviewText: "That season finale cliffhanger had my heart racing for 40 straight minutes. Best sci-fi thriller series out right now.",
         userName: "Meera",
         userColor: "#db2777",
+        isAnonymous: false,
+        expiresAt: null,
         createdAt: Date.now() - 3600000 * 5
       }
     ];
 
-    // INITIALIZE AUTH & REALTIME LISTENER
-    async function initCloudSync() {
-      updateUserBadgeUI();
-      renderStarSelector();
+    function pickColorForName(name) {
+      const palette = ["#059669", "#2563eb", "#db2777", "#d97706", "#7c3aed", "#0891b2"];
+      const str = name || "Guest";
+      let sum = 0;
+      for (let i = 0; i < str.length; i++) sum += str.charCodeAt(i);
+      return palette[sum % palette.length];
+    }
 
-      try {
-        await signInAnonymously(auth);
-      } catch (err) {
-        console.warn("Anonymous auth not enabled yet or blocked, attempting direct Firestore / Local fallback:", err.message);
+    // CHECK & EXPIRE 30-DAY ANONYMOUS ACCOUNTS
+    async function handleAuthUser(user) {
+      if (!user) {
+        try {
+          await signInAnonymously(auth);
+        } catch (err) {
+          console.warn("Anonymous sign-in fallback:", err.message);
+          updateUserBadgeUI();
+        }
+        return;
       }
+
+      const createdTimeMs = user.metadata?.creationTime
+        ? new Date(user.metadata.creationTime).getTime()
+        : Date.now();
+      const expiresAtMs = createdTimeMs + THIRTY_DAYS_MS;
+
+      // If anonymous account is older than 30 days, delete & issue fresh session
+      if (user.isAnonymous && Date.now() > expiresAtMs) {
+        try {
+          localStorage.removeItem("cineboxd_guest_nickname");
+          await deleteUser(user);
+          await signInAnonymously(auth);
+          return;
+        } catch (e) {
+          console.warn("Could not auto-delete expired anonymous user:", e);
+        }
+      }
+
+      if (user.isAnonymous) {
+        const savedNick = localStorage.getItem("cineboxd_guest_nickname") || `Guest-${user.uid.slice(0, 4)}`;
+        currentUser = {
+          uid: user.uid,
+          name: savedNick,
+          email: "",
+          photoURL: "",
+          color: pickColorForName(savedNick),
+          isAnonymous: true,
+          expiresAt: expiresAtMs
+        };
+      } else {
+        const customOverride = localStorage.getItem(`cineboxd_name_${user.uid}`);
+        const displayName = customOverride || user.displayName || (user.email ? user.email.split("@")[0] : "Friend");
+        currentUser = {
+          uid: user.uid,
+          name: displayName,
+          email: user.email || "",
+          photoURL: user.photoURL || "",
+          color: pickColorForName(displayName),
+          isAnonymous: false,
+          expiresAt: null
+        };
+      }
+
+      updateUserBadgeUI();
+    }
+
+    // GOOGLE SIGN-IN (UPGRADES GUEST OR SIGNS IN DIRECTLY)
+    window.signInWithGoogleAccount = async function () {
+      try {
+        if (auth.currentUser && auth.currentUser.isAnonymous) {
+          try {
+            // Try upgrading anonymous account so their guest reviews become permanent
+            const linked = await linkWithPopup(auth.currentUser, googleProvider);
+            await handleAuthUser(linked.user);
+            closeProfileModal();
+            return;
+          } catch (linkErr) {
+            // If Google account already exists in Firebase, sign in normally
+            const result = await signInWithPopup(auth, googleProvider);
+            await handleAuthUser(result.user);
+            closeProfileModal();
+            return;
+          }
+        } else {
+          const result = await signInWithPopup(auth, googleProvider);
+          await handleAuthUser(result.user);
+          closeProfileModal();
+        }
+      } catch (err) {
+        alert(
+          "Google Sign-In failed: " +
+            err.message +
+            "\n\nMake sure Google is enabled in Firebase Console -> Authentication -> Sign-in method, and your GitHub domain is in Authorized Domains."
+        );
+      }
+    };
+
+    window.signOutToGuest = async function () {
+      try {
+        await signOut(auth);
+        await signInAnonymously(auth);
+        closeProfileModal();
+      } catch (err) {
+        console.error("Sign out error:", err);
+      }
+    };
+
+    window.saveCustomNickname = function (e) {
+      e.preventDefault();
+      const name = document.getElementById("customUserNameInput").value.trim();
+      if (!name) return;
+
+      if (currentUser.isAnonymous) {
+        localStorage.setItem("cineboxd_guest_nickname", name);
+      } else {
+        localStorage.setItem(`cineboxd_name_${currentUser.uid}`, name);
+      }
+
+      currentUser.name = name;
+      currentUser.color = pickColorForName(name);
+      updateUserBadgeUI();
+      document.getElementById("customUserNameInput").value = "";
+      closeProfileModal();
+    };
+
+    // INITIALIZE AUTH & REALTIME FIRESTORE SYNC
+    function initCloudSync() {
+      renderStarSelector();
+      onAuthStateChanged(auth, (user) => {
+        handleAuthUser(user);
+      });
 
       onSnapshot(
         reviewsCollectionRef,
@@ -438,20 +614,34 @@
           statusEl.textContent = "Live Cloud Sync";
           statusEl.className = "text-[11px] px-2 py-0.5 rounded-full bg-emerald-950 text-lbGreen border border-lbGreen/40";
 
-          allReviews = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-          allReviews.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          const now = Date.now();
+          const validDocs = [];
+
+          snapshot.docs.forEach((d) => {
+            const data = d.data();
+            // Auto-delete anonymous reviews past their 30-day expiration
+            if (data.isAnonymous && data.expiresAt && now > data.expiresAt) {
+              deleteDoc(doc(db, "cineboxd_reviews", d.id)).catch(() => {});
+            } else {
+              validDocs.push({ id: d.id, ...data });
+            }
+          });
+
+          allReviews = validDocs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
           updateUserFilterDropdown();
           renderApp();
           if (currentlyOpenShowKey) refreshOpenDetailsModal();
         },
         (error) => {
-          console.warn("Firestore read failed (enable Firestore in Test Mode in Firebase Console):", error.message);
+          console.warn("Firestore fallback:", error.message);
           useLocalStorageFallback = true;
           const statusEl = document.getElementById("syncStatus");
-          statusEl.textContent = "Local Mode (Enable Firestore in Console)";
+          statusEl.textContent = "Local Mode";
           statusEl.className = "text-[11px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-500/40";
 
-          allReviews = JSON.parse(localStorage.getItem("cineboxd_fallback_reviews") || "[]");
+          const now = Date.now();
+          const raw = JSON.parse(localStorage.getItem("cineboxd_fallback_reviews") || "[]");
+          allReviews = raw.filter((r) => !(r.isAnonymous && r.expiresAt && now > r.expiresAt));
           updateUserFilterDropdown();
           renderApp();
         }
@@ -463,6 +653,41 @@
       updateUserFilterDropdown();
       renderApp();
       if (currentlyOpenShowKey) refreshOpenDetailsModal();
+    }
+
+    function getDaysRemaining(expiresAt) {
+      if (!expiresAt) return 30;
+      const diff = expiresAt - Date.now();
+      return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    }
+
+    function updateUserBadgeUI() {
+      const nameEl = document.getElementById("currentUserName");
+      const badgeEl = document.getElementById("currentAccountBadge");
+      const avatarEl = document.getElementById("currentUserAvatar");
+      const photoEl = document.getElementById("currentUserPhoto");
+
+      nameEl.textContent = currentUser.name;
+
+      if (currentUser.photoURL) {
+        photoEl.src = currentUser.photoURL;
+        photoEl.classList.remove("hidden");
+        avatarEl.classList.add("hidden");
+      } else {
+        photoEl.classList.add("hidden");
+        avatarEl.classList.remove("hidden");
+        avatarEl.textContent = (currentUser.name || "G")[0].toUpperCase();
+        avatarEl.style.backgroundColor = currentUser.color || "#059669";
+      }
+
+      if (currentUser.isAnonymous) {
+        const days = getDaysRemaining(currentUser.expiresAt);
+        badgeEl.textContent = `Guest (${days}d left)`;
+        badgeEl.className = "text-[10px] text-amber-400 block";
+      } else {
+        badgeEl.textContent = "Google Verified";
+        badgeEl.className = "text-[10px] text-lbGreen block";
+      }
     }
 
     // GROUP REVIEWS BY SHOW TITLE
@@ -504,7 +729,6 @@
       return html;
     }
 
-    // RENDER MAIN GRID
     window.renderApp = function () {
       const searchVal = (document.getElementById("searchInput").value || "").toLowerCase().trim();
       const shows = getGroupedShows();
@@ -578,15 +802,16 @@
                   <div class="flex -space-x-1.5">
                     ${uniqueReviewers
                       .slice(0, 4)
-                      .map(
-                        (u) => `
-                        <span
-                          title="Reviewed by ${u.userName}"
-                          style="background-color: ${u.userColor || "#059669"}"
-                          class="w-5 h-5 rounded-full text-[10px] font-bold text-white flex items-center justify-center ring-2 ring-[#14181c]"
-                        >
-                          ${(u.userName || "U")[0].toUpperCase()}
-                        </span>`
+                      .map((u) =>
+                        u.userPhoto
+                          ? `<img src="${u.userPhoto}" title="Reviewed by ${u.userName}" class="w-5 h-5 rounded-full object-cover ring-2 ring-[#14181c]" />`
+                          : `<span
+                              title="Reviewed by ${u.userName}"
+                              style="background-color: ${u.userColor || "#059669"}"
+                              class="w-5 h-5 rounded-full text-[10px] font-bold text-white flex items-center justify-center ring-2 ring-[#14181c]"
+                            >
+                              ${(u.userName || "U")[0].toUpperCase()}
+                            </span>`
                       )
                       .join("")}
                   </div>
@@ -598,7 +823,6 @@
         .join("");
     };
 
-    // OPEN DETAILS MODAL WHEN CLICKING COVER
     window.openShowDetails = function (showKey) {
       currentlyOpenShowKey = showKey;
       refreshOpenDetailsModal();
@@ -635,14 +859,21 @@
       listEl.innerHTML = show.reviews
         .map((r) => {
           const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "";
+          const badge = r.isAnonymous
+            ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/30" title="Auto-deletes after 30 days">Guest (${getDaysRemaining(r.expiresAt)}d left)</span>`
+            : `<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-lbGreen border border-lbGreen/30"><i class="fa-brands fa-google mr-1 text-[9px]"></i>Verified</span>`;
+
+          const avatarHTML = r.userPhoto
+            ? `<img src="${r.userPhoto}" class="w-6 h-6 rounded-full object-cover" />`
+            : `<span style="background-color: ${r.userColor || "#059669"}" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white">${(r.userName || "U")[0].toUpperCase()}</span>`;
+
           return `
             <div class="bg-[#14181c] border border-lbBorder rounded-lg p-3.5">
-              <div class="flex items-center justify-between gap-2 mb-1.5">
-                <div class="flex items-center gap-2">
-                  <span style="background-color: ${r.userColor || "#059669"}" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white">
-                    ${(r.userName || "U")[0].toUpperCase()}
-                  </span>
+              <div class="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                <div class="flex items-center gap-2 flex-wrap">
+                  ${avatarHTML}
                   <span class="text-white font-bold text-xs">${r.userName}</span>
+                  ${badge}
                   <div class="text-xs flex items-center gap-0.5 ml-1">
                     ${renderStarsHTML(r.rating)}
                   </div>
@@ -669,9 +900,17 @@
       modal.classList.remove("flex");
     };
 
-    // LOG / ADD REVIEW MODAL
     window.openLogModal = function (prefillShow = null) {
       document.getElementById("postingAsLabel").textContent = currentUser.name;
+      const expiryNotice = document.getElementById("postingExpiryNotice");
+      if (currentUser.isAnonymous) {
+        expiryNotice.textContent = `Posting as Guest — expires in ${getDaysRemaining(currentUser.expiresAt)} days (Sign in with Google for permanent reviews)`;
+        expiryNotice.className = "block text-[11px] text-amber-400";
+      } else {
+        expiryNotice.textContent = "Google Verified — permanent review";
+        expiryNotice.className = "block text-[11px] text-lbGreen";
+      }
+
       if (prefillShow) {
         document.getElementById("inputTitle").value = prefillShow.title;
         document.getElementById("inputType").value = prefillShow.type || "Movie";
@@ -744,6 +983,7 @@
 
       if (!title || !reviewText) return;
 
+      const now = Date.now();
       const entry = {
         title,
         type,
@@ -752,22 +992,26 @@
         rating: selectedRating,
         liked: isHeartLiked,
         reviewText,
+        userId: currentUser.uid,
         userName: currentUser.name,
+        userPhoto: currentUser.photoURL || "",
         userColor: currentUser.color,
-        createdAt: Date.now()
+        isAnonymous: currentUser.isAnonymous,
+        expiresAt: currentUser.isAnonymous ? now + THIRTY_DAYS_MS : null,
+        createdAt: now
       };
 
       closeLogModal();
 
       if (useLocalStorageFallback) {
-        entry.id = "local_" + Date.now();
+        entry.id = "local_" + now;
         allReviews.unshift(entry);
         saveFallbackLocal();
       } else {
         try {
           await addDoc(reviewsCollectionRef, entry);
         } catch (err) {
-          alert("Could not save to Firestore. Make sure Firestore Database is created in Test Mode in your Firebase Console.");
+          alert("Could not save to Firestore. Check your Firebase Console Firestore Rules.");
         }
       }
     };
@@ -785,7 +1029,6 @@
       }
     };
 
-    // SEED SAMPLE DATA
     window.seedSampleShows = async function () {
       if (useLocalStorageFallback) {
         for (const item of SEED_REVIEWS) {
@@ -799,7 +1042,6 @@
       }
     };
 
-    // FILTERS
     window.setMediaFilter = function (type) {
       activeMediaFilter = type;
       ["ALL", "Movie", "Series"].forEach((t) => {
@@ -835,32 +1077,42 @@
       if (names.includes(currentVal)) select.value = currentVal;
     }
 
-    // MULTI-USER PROFILE SWITCHER
-    function updateUserBadgeUI() {
-      document.getElementById("currentUserName").textContent = currentUser.name;
-      const av = document.getElementById("currentUserAvatar");
-      av.textContent = (currentUser.name || "U")[0].toUpperCase();
-      av.style.backgroundColor = currentUser.color || "#059669";
-    }
-
     window.openProfileModal = function () {
-      const grid = document.getElementById("quickFriendsGrid");
-      grid.innerHTML = PRESET_FRIENDS.map(
-        (f) => `
-          <button
-            type="button"
-            onclick="selectFriendProfile('${f.name}', '${f.color}')"
-            class="flex items-center gap-2.5 p-2.5 rounded-lg border ${
-              currentUser.name === f.name ? "border-lbGreen bg-[#14181c]" : "border-lbBorder bg-[#14181c]/60"
-            } hover:border-lbGreen transition text-left"
-          >
-            <span style="background-color: ${f.color}" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white">
-              ${f.name[0]}
-            </span>
-            <span class="text-white text-sm font-semibold">${f.name}</span>
-          </button>
-        `
-      ).join("");
+      document.getElementById("modalUserName").textContent = currentUser.name;
+      document.getElementById("customUserNameInput").value = currentUser.name;
+
+      const modalPhoto = document.getElementById("modalUserPhoto");
+      const modalAvatar = document.getElementById("modalUserAvatar");
+      const pill = document.getElementById("modalAccountTypePill");
+      const subtext = document.getElementById("modalUserEmailOrExpiry");
+      const signInSec = document.getElementById("googleSignInSection");
+      const signOutSec = document.getElementById("googleSignOutSection");
+
+      if (currentUser.photoURL) {
+        modalPhoto.src = currentUser.photoURL;
+        modalPhoto.classList.remove("hidden");
+        modalAvatar.classList.add("hidden");
+      } else {
+        modalPhoto.classList.add("hidden");
+        modalAvatar.classList.remove("hidden");
+        modalAvatar.textContent = (currentUser.name || "G")[0].toUpperCase();
+        modalAvatar.style.backgroundColor = currentUser.color || "#059669";
+      }
+
+      if (currentUser.isAnonymous) {
+        const daysLeft = getDaysRemaining(currentUser.expiresAt);
+        pill.textContent = `Guest (${daysLeft}d left)`;
+        pill.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/40";
+        subtext.textContent = `Anonymous session & reviews auto-expire in ${daysLeft} days.`;
+        signInSec.classList.remove("hidden");
+        signOutSec.classList.add("hidden");
+      } else {
+        pill.textContent = "Google Verified";
+        pill.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-lbGreen border border-lbGreen/40";
+        subtext.textContent = currentUser.email || "Permanent Google Account";
+        signInSec.classList.add("hidden");
+        signOutSec.classList.remove("hidden");
+      }
 
       const modal = document.getElementById("profileModal");
       modal.classList.remove("hidden");
@@ -871,23 +1123,6 @@
       const modal = document.getElementById("profileModal");
       modal.classList.add("hidden");
       modal.classList.remove("flex");
-    };
-
-    window.selectFriendProfile = function (name, color) {
-      currentUser = { name, color };
-      localStorage.setItem("cineboxd_active_user", JSON.stringify(currentUser));
-      updateUserBadgeUI();
-      closeProfileModal();
-    };
-
-    window.saveCustomProfile = function (e) {
-      e.preventDefault();
-      const name = document.getElementById("customUserNameInput").value.trim();
-      if (!name) return;
-      const palette = ["#059669", "#2563eb", "#db2777", "#d97706", "#7c3aed", "#0891b2"];
-      const color = palette[name.length % palette.length];
-      selectFriendProfile(name, color);
-      document.getElementById("customUserNameInput").value = "";
     };
 
     initCloudSync();
