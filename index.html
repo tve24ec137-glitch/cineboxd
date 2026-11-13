@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineBoxd — Track & Review Shows With Friends</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            lbBg: '#14181c',
+            lbCard: '#1f262d',
+            lbBorder: '#2c3440',
+            lbGreen: '#00e054',
+            lbOrange: '#ff8000',
+            lbBlue: '#40bcf4',
+            lbText: '#9ab'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #14181c;
+      color: #9ab;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .poster-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .poster-card:hover {
+      transform: translateY(-4px);
+    }
+    .poster-border {
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      transition: border-color 0.2s ease;
+    }
+    .poster-card:hover .poster-border {
+      border-color: #00e054;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #14181c;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2c3440;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOP NAVIGATION -->
+  <header class="bg-[#1f262d]/95 border-b border-lbBorder sticky top-0 z-30 backdrop-blur">
+    <div class="max-w-6xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="resetFilters()">
+        <div class="flex items-center gap-1">
+          <span class="w-3.5 h-3.5 rounded-full bg-lbOrange inline-block"></span>
+          <span class="w-3.5 h-3.5 rounded-full bg-lbGreen inline-block -ml-1"></span>
+          <span class="w-3.5 h-3.5 rounded-full bg-lbBlue inline-block -ml-1"></span>
+        </div>
+        <span class="text-white font-black tracking-wider text-xl">CINEBOXD</span>
+        <span id="syncStatus" class="text-[11px] px-2 py-0.5 rounded-full bg-lbBorder text-gray-300">Connecting...</span>
+      </div>
+
+      <!-- Search & Controls -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400"></i>
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Search movies, series, friends..."
+            oninput="renderApp()"
+            class="bg-[#14181c] text-white text-sm pl-8 pr-3 py-1.5 rounded-md border border-lbBorder focus:outline-none focus:border-lbGreen w-48 sm:w-64"
+          />
+        </div>
+
+        <button
+          onclick="openLogModal()"
+          class="bg-lbGreen hover:bg-[#00c448] text-black font-bold text-sm px-3.5 py-1.5 rounded-md flex items-center gap-1.5 transition shadow"
+        >
+          <i class="fa-solid fa-plus"></i>
+          <span>Log Show</span>
+        </button>
+
+        <!-- Current User Switcher Button -->
+        <button
+          onclick="openProfileModal()"
+          class="flex items-center gap-2 bg-[#14181c] hover:bg-lbBorder border border-lbBorder px-3 py-1.5 rounded-md transition"
+          title="Switch or change your profile name"
+        >
+          <span id="currentUserAvatar" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white bg-emerald-600">V</span>
+          <span id="currentUserName" class="text-white text-sm font-medium">Vysakh</span>
+          <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO / FILTER BAR -->
+  <section class="max-w-6xl mx-auto w-full px-4 pt-6 pb-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-lbBorder pb-4">
+      <div>
+        <h1 class="text-white text-2xl font-bold tracking-tight">Completed Movies & Series</h1>
+        <p class="text-xs text-gray-400 mt-0.5">Click any poster cover to read all friend reviews or add your own rating.</p>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="setMediaFilter('ALL')" id="filter-ALL" class="px-3 py-1 rounded text-xs font-bold bg-lbGreen text-black">All Shows</button>
+        <button onclick="setMediaFilter('Movie')" id="filter-Movie" class="px-3 py-1 rounded text-xs font-semibold bg-lbCard text-gray-300 hover:text-white">Movies</button>
+        <button onclick="setMediaFilter('Series')" id="filter-Series" class="px-3 py-1 rounded text-xs font-semibold bg-lbCard text-gray-300 hover:text-white">Series</button>
+
+        <select
+          id="userFilterSelect"
+          onchange="setUserFilter(this.value)"
+          class="bg-lbCard text-gray-200 text-xs font-semibold px-3 py-1.5 rounded border border-lbBorder focus:outline-none focus:border-lbGreen ml-1"
+        >
+          <option value="ALL">All Friends</option>
+        </select>
+
+        <button
+          onclick="seedSampleShows()"
+          class="text-xs bg-lbCard hover:bg-lbBorder text-lbBlue border border-lbBorder px-2.5 py-1 rounded transition"
+          title="Load starter movies and series"
+        >
+          <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Load Samples
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN POSTER GRID -->
+  <main class="max-w-6xl mx-auto w-full px-4 py-4 flex-1">
+    <div id="emptyState" class="hidden text-center py-16 bg-lbCard/50 rounded-xl border border-lbBorder my-4">
+      <i class="fa-solid fa-film text-4xl text-gray-500 mb-3"></i>
+      <h2 class="text-white font-bold text-lg">No shows logged yet</h2>
+      <p class="text-sm text-gray-400 max-w-md mx-auto mt-1 mb-5">
+        Start logging the movies and series you and your friends have completed watching, or load sample shows to test it out.
+      </p>
+      <div class="flex justify-center gap-3">
+        <button onclick="openLogModal()" class="bg-lbGreen text-black font-bold text-sm px-4 py-2 rounded-md">
+          + Log First Show
+        </button>
+        <button onclick="seedSampleShows()" class="bg-lbBorder text-white font-semibold text-sm px-4 py-2 rounded-md hover:bg-gray-700">
+          Load Sample Friends' Reviews
+        </button>
+      </div>
+    </div>
+
+    <div id="posterGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5"></div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-lbBorder mt-12 py-6 text-center text-xs text-gray-500">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <span>CineBoxd — Shared Friends Movie & Series Diary</span>
+      <span>Powered by Firebase Realtime Firestore</span>
+    </div>
+  </footer>
+
+  <!-- SHOW DETAILS & REVIEWS MODAL (WHEN CLICKING A COVER) -->
+  <div id="detailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-lbCard border border-lbBorder rounded-xl max-w-3xl w-full overflow-hidden shadow-2xl my-8">
+      <div class="p-6 flex flex-col md:flex-row gap-6">
+        <!-- Left Cover Image -->
+        <div class="w-40 sm:w-48 flex-shrink-0 mx-auto md:mx-0">
+          <div class="aspect-[2/3] rounded-lg overflow-hidden border border-lbBorder shadow-lg bg-[#14181c]">
+            <img id="detailCover" src="" alt="Poster" class="w-full h-full object-cover" />
+          </div>
+          <button
+            id="reviewThisShowBtn"
+            class="w-full mt-3 bg-lbGreen hover:bg-[#00c448] text-black font-bold text-xs py-2.5 px-3 rounded-md transition flex items-center justify-center gap-1.5"
+          >
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>Add / Edit My Review</span>
+          </button>
+        </div>
+
+        <!-- Right Info & Friend Reviews -->
+        <div class="flex-1 flex flex-col justify-between">
+          <div>
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span id="detailTypeBadge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-lbBorder text-lbBlue">MOVIE</span>
+                  <span id="detailYear" class="text-xs text-gray-400">2024</span>
+                </div>
+                <h2 id="detailTitle" class="text-2xl font-black text-white mt-1">Show Title</h2>
+              </div>
+              <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-white text-xl leading-none p-1">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <!-- Average Rating Bar -->
+            <div class="flex items-center gap-3 mt-3 bg-[#14181c] px-3.5 py-2.5 rounded-lg border border-lbBorder">
+              <div id="detailAvgStars" class="text-lbGreen text-base flex items-center gap-0.5"></div>
+              <span id="detailAvgNumber" class="text-white font-bold text-sm">4.5 / 5</span>
+              <span id="detailReviewCount" class="text-xs text-gray-400 ml-auto">3 friend reviews</span>
+            </div>
+
+            <!-- Reviews List -->
+            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 mt-5 mb-2.5 border-b border-lbBorder pb-1.5">
+              Reviews Logged by Friends
+            </h3>
+            <div id="detailReviewsList" class="space-y-3 max-h-72 overflow-y-auto pr-1"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG / CREATE NEW ENTRY MODAL -->
+  <div id="logModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-lbCard border border-lbBorder rounded-xl max-w-lg w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-lbBorder pb-3 mb-4">
+        <h2 class="text-white font-bold text-lg flex items-center gap-2">
+          <i class="fa-solid fa-clapperboard text-lbGreen"></i>
+          <span>Log Completed Movie or Series</span>
+        </h2>
+        <button onclick="closeLogModal()" class="text-gray-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Quick Presets -->
+      <div class="mb-4">
+        <span class="text-[11px] uppercase tracking-wider text-gray-400 block mb-1.5">Quick Fill Popular Show (Optional):</span>
+        <div class="flex flex-wrap gap-1.5">
+          <button type="button" onclick="fillPreset('Dune: Part Two', 'Movie', '2024', 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder">Dune: Part Two</button>
+          <button type="button" onclick="fillPreset('Breaking Bad', 'Series', '2008', 'https://image.tmdb.org/t/p/w500/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder">Breaking Bad</button>
+          <button type="button" onclick="fillPreset('Oppenheimer', 'Movie', '2023', 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder">Oppenheimer</button>
+          <button type="button" onclick="fillPreset('Arcane', 'Series', '2021', 'https://image.tmdb.org/t/p/w500/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder">Arcane</button>
+        </div>
+      </div>
+
+      <form id="logForm" onsubmit="submitReviewForm(event)" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Title *</label>
+            <input id="inputTitle" type="text" required placeholder="e.g. Interstellar" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded border border-lbBorder focus:outline-none focus:border-lbGreen" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Type *</label>
+            <select id="inputType" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded border border-lbBorder focus:outline-none focus:border-lbGreen">
+              <option value="Movie">Movie</option>
+              <option value="Series">Series</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Release Year</label>
+            <input id="inputYear" type="number" placeholder="2024" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded border border-lbBorder focus:outline-none focus:border-lbGreen" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Cover Image URL (Auto-generates if empty)</label>
+            <input id="inputCover" type="url" placeholder="https://image.tmdb.org/..." class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded border border-lbBorder focus:outline-none focus:border-lbGreen" />
+          </div>
+        </div>
+
+        <!-- 5-Star Selector & Heart Like -->
+        <div class="flex items-center justify-between bg-[#14181c] p-3 rounded-lg border border-lbBorder">
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Your Rating (Max 5 Stars) *</label>
+            <div id="starSelector" class="flex items-center gap-1.5 text-2xl cursor-pointer"></div>
+          </div>
+          <div class="text-center">
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Liked?</label>
+            <button type="button" id="likeToggleBtn" onclick="toggleHeartLike()" class="text-2xl text-gray-500 hover:scale-110 transition">
+              <i class="fa-solid fa-heart"></i>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1">Your Review *</label>
+          <textarea
+            id="inputReview"
+            rows="3"
+            required
+            placeholder="Write what you thought about this movie or series..."
+            class="w-full bg-[#14181c] text-white text-sm p-3 rounded border border-lbBorder focus:outline-none focus:border-lbGreen"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <span class="text-xs text-gray-400">Posting as: <strong id="postingAsLabel" class="text-white">Vysakh</strong></span>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeLogModal()" class="px-4 py-2 rounded text-xs font-semibold text-gray-300 hover:bg-lbBorder">Cancel</button>
+            <button type="submit" class="bg-lbGreen hover:bg-[#00c448] text-black font-bold text-xs px-5 py-2 rounded shadow">Save Entry</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MULTI-USER PROFILE SWITCHER MODAL -->
+  <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-lbCard border border-lbBorder rounded-xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-lbBorder pb-3 mb-4">
+        <h2 class="text-white font-bold text-base">Switch Active User / Friend Profile</h2>
+        <button onclick="closeProfileModal()" class="text-gray-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-gray-400 mb-3">
+        Choose your name so any movie or series you log is credited to you:
+      </p>
+
+      <div class="grid grid-cols-2 gap-2 mb-4" id="quickFriendsGrid"></div>
+
+      <form onsubmit="saveCustomProfile(event)" class="border-t border-lbBorder pt-4">
+        <label class="block text-xs font-semibold text-gray-300 mb-1.5">Or Enter Your Own Name:</label>
+        <div class="flex gap-2">
+          <input
+            id="customUserNameInput"
+            type="text"
+            required
+            placeholder="Enter your name..."
+            class="flex-1 bg-[#14181c] text-white text-sm px-3 py-2 rounded border border-lbBorder focus:outline-none focus:border-lbGreen"
+          />
+          <button type="submit" class="bg-lbGreen text-black font-bold text-xs px-4 py-2 rounded">
+            Set Profile
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FIREBASE & APPLICATION LOGIC -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // YOUR LIVE FIREBASE CONFIGURATION
+    const firebaseConfig = {
+      apiKey: "AIzaSyBLwi5u_B7stI-RvSCB-ohcXGqLUIx23rg",
+      authDomain: "cineboxd-app.firebaseapp.com",
+      projectId: "cineboxd-app",
+      storageBucket: "cineboxd-app.firebasestorage.app",
+      messagingSenderId: "1052498363148",
+      appId: "1:1052498363148:web:d208c76e3adc64dc4bff29",
+      measurementId: "G-KTXGHR18HS"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const reviewsCollectionRef = collection(db, "cineboxd_reviews");
+
+    // STATE
+    let allReviews = [];
+    let selectedRating = 5;
+    let isHeartLiked = true;
+    let activeMediaFilter = "ALL";
+    let activeUserFilter = "ALL";
+    let currentlyOpenShowKey = null;
+    let useLocalStorageFallback = false;
+
+    const PRESET_FRIENDS = [
+      { name: "Vysakh", color: "#059669" },
+      { name: "Arjun", color: "#2563eb" },
+      { name: "Meera", color: "#db2777" },
+      { name: "Rohan", color: "#d97706" }
+    ];
+
+    let currentUser = JSON.parse(localStorage.getItem("cineboxd_active_user")) || PRESET_FRIENDS[0];
+
+    const SEED_REVIEWS = [
+      {
+        title: "Interstellar",
+        type: "Movie",
+        year: "2014",
+        coverUrl: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+        rating: 5,
+        liked: true,
+        reviewText: "The docking scene paired with Hans Zimmer's 'No Time for Caution' organ score is pure cinema history.",
+        userName: "Vysakh",
+        userColor: "#059669",
+        createdAt: Date.now() - 3600000 * 24
+      },
+      {
+        title: "Interstellar",
+        type: "Movie",
+        year: "2014",
+        coverUrl: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+        rating: 4,
+        liked: true,
+        reviewText: "Visually breathtaking and emotionally heavy. Gets better on every rewatch.",
+        userName: "Arjun",
+        userColor: "#2563eb",
+        createdAt: Date.now() - 3600000 * 12
+      },
+      {
+        title: "Severance",
+        type: "Series",
+        year: "2022",
+        coverUrl: "https://image.tmdb.org/t/p/w500/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
+        rating: 5,
+        liked: true,
+        reviewText: "That season finale cliffhanger had my heart racing for 40 straight minutes. Best sci-fi thriller series out right now.",
+        userName: "Meera",
+        userColor: "#db2777",
+        createdAt: Date.now() - 3600000 * 5
+      }
+    ];
+
+    // INITIALIZE AUTH & REALTIME LISTENER
+    async function initCloudSync() {
+      updateUserBadgeUI();
+      renderStarSelector();
+
+      try {
+        await signInAnonymously(auth);
+      } catch (err) {
+        console.warn("Anonymous auth not enabled yet or blocked, attempting direct Firestore / Local fallback:", err.message);
+      }
+
+      onSnapshot(
+        reviewsCollectionRef,
+        (snapshot) => {
+          useLocalStorageFallback = false;
+          const statusEl = document.getElementById("syncStatus");
+          statusEl.textContent = "Live Cloud Sync";
+          statusEl.className = "text-[11px] px-2 py-0.5 rounded-full bg-emerald-950 text-lbGreen border border-lbGreen/40";
+
+          allReviews = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          allReviews.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          updateUserFilterDropdown();
+          renderApp();
+          if (currentlyOpenShowKey) refreshOpenDetailsModal();
+        },
+        (error) => {
+          console.warn("Firestore read failed (enable Firestore in Test Mode in Firebase Console):", error.message);
+          useLocalStorageFallback = true;
+          const statusEl = document.getElementById("syncStatus");
+          statusEl.textContent = "Local Mode (Enable Firestore in Console)";
+          statusEl.className = "text-[11px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-500/40";
+
+          allReviews = JSON.parse(localStorage.getItem("cineboxd_fallback_reviews") || "[]");
+          updateUserFilterDropdown();
+          renderApp();
+        }
+      );
+    }
+
+    function saveFallbackLocal() {
+      localStorage.setItem("cineboxd_fallback_reviews", JSON.stringify(allReviews));
+      updateUserFilterDropdown();
+      renderApp();
+      if (currentlyOpenShowKey) refreshOpenDetailsModal();
+    }
+
+    // GROUP REVIEWS BY SHOW TITLE
+    function getGroupedShows() {
+      const map = new Map();
+      for (const rev of allReviews) {
+        const key = (rev.title || "").trim().toLowerCase();
+        if (!key) continue;
+        if (!map.has(key)) {
+          map.set(key, {
+            key,
+            title: rev.title.trim(),
+            type: rev.type || "Movie",
+            year: rev.year || "",
+            coverUrl: rev.coverUrl || "",
+            reviews: []
+          });
+        }
+        const group = map.get(key);
+        if (!group.coverUrl && rev.coverUrl) group.coverUrl = rev.coverUrl;
+        group.reviews.push(rev);
+      }
+      return Array.from(map.values());
+    }
+
+    function getFallbackPoster(title) {
+      const encoded = encodeURIComponent(title || "Show");
+      return `https://placehold.co/400x600/1f262d/00e054?text=${encoded}`;
+    }
+
+    function renderStarsHTML(rating) {
+      const full = Math.round(Number(rating) || 0);
+      let html = "";
+      for (let i = 1; i <= 5; i++) {
+        html += i <= full
+          ? '<i class="fa-solid fa-star text-lbGreen"></i>'
+          : '<i class="fa-regular fa-star text-gray-600"></i>';
+      }
+      return html;
+    }
+
+    // RENDER MAIN GRID
+    window.renderApp = function () {
+      const searchVal = (document.getElementById("searchInput").value || "").toLowerCase().trim();
+      const shows = getGroupedShows();
+
+      const filtered = shows.filter((show) => {
+        if (activeMediaFilter !== "ALL" && show.type !== activeMediaFilter) return false;
+        if (activeUserFilter !== "ALL") {
+          const hasUser = show.reviews.some((r) => r.userName === activeUserFilter);
+          if (!hasUser) return false;
+        }
+        if (searchVal) {
+          const matchTitle = show.title.toLowerCase().includes(searchVal);
+          const matchUser = show.reviews.some((r) => (r.userName || "").toLowerCase().includes(searchVal));
+          const matchText = show.reviews.some((r) => (r.reviewText || "").toLowerCase().includes(searchVal));
+          return matchTitle || matchUser || matchText;
+        }
+        return true;
+      });
+
+      const grid = document.getElementById("posterGrid");
+      const empty = document.getElementById("emptyState");
+
+      if (filtered.length === 0) {
+        grid.innerHTML = "";
+        empty.classList.remove("hidden");
+        return;
+      }
+
+      empty.classList.add("hidden");
+
+      grid.innerHTML = filtered
+        .map((show) => {
+          const avgRating =
+            show.reviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / show.reviews.length;
+          const cover = show.coverUrl || getFallbackPoster(show.title);
+          const uniqueReviewers = [];
+          const seen = new Set();
+          for (const r of show.reviews) {
+            if (!seen.has(r.userName)) {
+              seen.add(r.userName);
+              uniqueReviewers.push(r);
+            }
+          }
+
+          return `
+            <div class="poster-card cursor-pointer group" onclick="openShowDetails('${show.key.replace(/'/g, "\\'")}')">
+              <div class="aspect-[2/3] rounded-lg overflow-hidden poster-border relative bg-[#1f262d] shadow-md">
+                <img
+                  src="${cover}"
+                  alt="${show.title}"
+                  onerror="this.src='${getFallbackPoster(show.title)}'"
+                  class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                />
+                <span class="absolute top-2 left-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-black/75 text-white backdrop-blur-sm">
+                  ${show.type}
+                </span>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition flex flex-col justify-end p-3">
+                  <span class="text-white text-xs font-bold flex items-center gap-1">
+                    <i class="fa-regular fa-comment-dots text-lbGreen"></i>
+                    Read ${show.reviews.length} ${show.reviews.length === 1 ? "Review" : "Reviews"}
+                  </span>
+                </div>
+              </div>
+
+              <div class="mt-2">
+                <h3 class="text-white font-bold text-sm truncate" title="${show.title}">${show.title}</h3>
+                <div class="flex items-center justify-between mt-1">
+                  <div class="flex items-center gap-0.5 text-xs">
+                    ${renderStarsHTML(avgRating)}
+                  </div>
+                  <div class="flex -space-x-1.5">
+                    ${uniqueReviewers
+                      .slice(0, 4)
+                      .map(
+                        (u) => `
+                        <span
+                          title="Reviewed by ${u.userName}"
+                          style="background-color: ${u.userColor || "#059669"}"
+                          class="w-5 h-5 rounded-full text-[10px] font-bold text-white flex items-center justify-center ring-2 ring-[#14181c]"
+                        >
+                          ${(u.userName || "U")[0].toUpperCase()}
+                        </span>`
+                      )
+                      .join("")}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+    };
+
+    // OPEN DETAILS MODAL WHEN CLICKING COVER
+    window.openShowDetails = function (showKey) {
+      currentlyOpenShowKey = showKey;
+      refreshOpenDetailsModal();
+      const modal = document.getElementById("detailsModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    };
+
+    function refreshOpenDetailsModal() {
+      const shows = getGroupedShows();
+      const show = shows.find((s) => s.key === currentlyOpenShowKey);
+      if (!show) {
+        closeDetailsModal();
+        return;
+      }
+
+      const avg = show.reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / show.reviews.length;
+      const cover = show.coverUrl || getFallbackPoster(show.title);
+
+      document.getElementById("detailCover").src = cover;
+      document.getElementById("detailTypeBadge").textContent = show.type;
+      document.getElementById("detailYear").textContent = show.year || "";
+      document.getElementById("detailTitle").textContent = show.title;
+      document.getElementById("detailAvgStars").innerHTML = renderStarsHTML(avg);
+      document.getElementById("detailAvgNumber").textContent = `${avg.toFixed(1)} / 5`;
+      document.getElementById("detailReviewCount").textContent = `${show.reviews.length} ${show.reviews.length === 1 ? "review" : "reviews"}`;
+
+      document.getElementById("reviewThisShowBtn").onclick = () => {
+        closeDetailsModal();
+        openLogModal(show);
+      };
+
+      const listEl = document.getElementById("detailReviewsList");
+      listEl.innerHTML = show.reviews
+        .map((r) => {
+          const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "";
+          return `
+            <div class="bg-[#14181c] border border-lbBorder rounded-lg p-3.5">
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <div class="flex items-center gap-2">
+                  <span style="background-color: ${r.userColor || "#059669"}" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                    ${(r.userName || "U")[0].toUpperCase()}
+                  </span>
+                  <span class="text-white font-bold text-xs">${r.userName}</span>
+                  <div class="text-xs flex items-center gap-0.5 ml-1">
+                    ${renderStarsHTML(r.rating)}
+                  </div>
+                  ${r.liked ? '<i class="fa-solid fa-heart text-lbOrange text-xs ml-1" title="Liked"></i>' : ""}
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-gray-500">${dateStr}</span>
+                  <button onclick="deleteReviewEntry('${r.id}')" class="text-gray-500 hover:text-red-400 text-xs" title="Delete review">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                </div>
+              </div>
+              <p class="text-gray-200 text-sm leading-relaxed whitespace-pre-line">${r.reviewText}</p>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    window.closeDetailsModal = function () {
+      currentlyOpenShowKey = null;
+      const modal = document.getElementById("detailsModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    };
+
+    // LOG / ADD REVIEW MODAL
+    window.openLogModal = function (prefillShow = null) {
+      document.getElementById("postingAsLabel").textContent = currentUser.name;
+      if (prefillShow) {
+        document.getElementById("inputTitle").value = prefillShow.title;
+        document.getElementById("inputType").value = prefillShow.type || "Movie";
+        document.getElementById("inputYear").value = prefillShow.year || "";
+        document.getElementById("inputCover").value = prefillShow.coverUrl || "";
+      } else {
+        document.getElementById("logForm").reset();
+      }
+      selectedRating = 5;
+      isHeartLiked = true;
+      renderStarSelector();
+      updateHeartUI();
+
+      const modal = document.getElementById("logModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    };
+
+    window.closeLogModal = function () {
+      const modal = document.getElementById("logModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    };
+
+    window.fillPreset = function (title, type, year, cover) {
+      document.getElementById("inputTitle").value = title;
+      document.getElementById("inputType").value = type;
+      document.getElementById("inputYear").value = year;
+      document.getElementById("inputCover").value = cover;
+    };
+
+    function renderStarSelector() {
+      const container = document.getElementById("starSelector");
+      let html = "";
+      for (let i = 1; i <= 5; i++) {
+        const active = i <= selectedRating;
+        html += `
+          <button type="button" onclick="setFormStar(${i})" class="focus:outline-none transition transform hover:scale-110">
+            <i class="${active ? "fa-solid text-lbGreen" : "fa-regular text-gray-500"} fa-star"></i>
+          </button>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    window.setFormStar = function (val) {
+      selectedRating = val;
+      renderStarSelector();
+    };
+
+    window.toggleHeartLike = function () {
+      isHeartLiked = !isHeartLiked;
+      updateHeartUI();
+    };
+
+    function updateHeartUI() {
+      const btn = document.getElementById("likeToggleBtn");
+      btn.className = isHeartLiked
+        ? "text-2xl text-lbOrange hover:scale-110 transition"
+        : "text-2xl text-gray-600 hover:scale-110 transition";
+    }
+
+    window.submitReviewForm = async function (e) {
+      e.preventDefault();
+      const title = document.getElementById("inputTitle").value.trim();
+      const type = document.getElementById("inputType").value;
+      const year = document.getElementById("inputYear").value.trim();
+      const coverUrl = document.getElementById("inputCover").value.trim() || getFallbackPoster(title);
+      const reviewText = document.getElementById("inputReview").value.trim();
+
+      if (!title || !reviewText) return;
+
+      const entry = {
+        title,
+        type,
+        year,
+        coverUrl,
+        rating: selectedRating,
+        liked: isHeartLiked,
+        reviewText,
+        userName: currentUser.name,
+        userColor: currentUser.color,
+        createdAt: Date.now()
+      };
+
+      closeLogModal();
+
+      if (useLocalStorageFallback) {
+        entry.id = "local_" + Date.now();
+        allReviews.unshift(entry);
+        saveFallbackLocal();
+      } else {
+        try {
+          await addDoc(reviewsCollectionRef, entry);
+        } catch (err) {
+          alert("Could not save to Firestore. Make sure Firestore Database is created in Test Mode in your Firebase Console.");
+        }
+      }
+    };
+
+    window.deleteReviewEntry = async function (id) {
+      if (useLocalStorageFallback) {
+        allReviews = allReviews.filter((r) => r.id !== id);
+        saveFallbackLocal();
+      } else {
+        try {
+          await deleteDoc(doc(db, "cineboxd_reviews", id));
+        } catch (err) {
+          console.error("Delete failed:", err);
+        }
+      }
+    };
+
+    // SEED SAMPLE DATA
+    window.seedSampleShows = async function () {
+      if (useLocalStorageFallback) {
+        for (const item of SEED_REVIEWS) {
+          allReviews.push({ ...item, id: "seed_" + Math.random().toString(36).slice(2) });
+        }
+        saveFallbackLocal();
+      } else {
+        for (const item of SEED_REVIEWS) {
+          await addDoc(reviewsCollectionRef, item);
+        }
+      }
+    };
+
+    // FILTERS
+    window.setMediaFilter = function (type) {
+      activeMediaFilter = type;
+      ["ALL", "Movie", "Series"].forEach((t) => {
+        const btn = document.getElementById("filter-" + t);
+        if (t === type) {
+          btn.className = "px-3 py-1 rounded text-xs font-bold bg-lbGreen text-black";
+        } else {
+          btn.className = "px-3 py-1 rounded text-xs font-semibold bg-lbCard text-gray-300 hover:text-white";
+        }
+      });
+      renderApp();
+    };
+
+    window.setUserFilter = function (user) {
+      activeUserFilter = user;
+      renderApp();
+    };
+
+    window.resetFilters = function () {
+      document.getElementById("searchInput").value = "";
+      document.getElementById("userFilterSelect").value = "ALL";
+      activeUserFilter = "ALL";
+      setMediaFilter("ALL");
+    };
+
+    function updateUserFilterDropdown() {
+      const select = document.getElementById("userFilterSelect");
+      const currentVal = select.value;
+      const names = Array.from(new Set(allReviews.map((r) => r.userName).filter(Boolean)));
+      select.innerHTML =
+        `<option value="ALL">All Friends (${names.length})</option>` +
+        names.map((n) => `<option value="${n}">Reviewed by ${n}</option>`).join("");
+      if (names.includes(currentVal)) select.value = currentVal;
+    }
+
+    // MULTI-USER PROFILE SWITCHER
+    function updateUserBadgeUI() {
+      document.getElementById("currentUserName").textContent = currentUser.name;
+      const av = document.getElementById("currentUserAvatar");
+      av.textContent = (currentUser.name || "U")[0].toUpperCase();
+      av.style.backgroundColor = currentUser.color || "#059669";
+    }
+
+    window.openProfileModal = function () {
+      const grid = document.getElementById("quickFriendsGrid");
+      grid.innerHTML = PRESET_FRIENDS.map(
+        (f) => `
+          <button
+            type="button"
+            onclick="selectFriendProfile('${f.name}', '${f.color}')"
+            class="flex items-center gap-2.5 p-2.5 rounded-lg border ${
+              currentUser.name === f.name ? "border-lbGreen bg-[#14181c]" : "border-lbBorder bg-[#14181c]/60"
+            } hover:border-lbGreen transition text-left"
+          >
+            <span style="background-color: ${f.color}" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white">
+              ${f.name[0]}
+            </span>
+            <span class="text-white text-sm font-semibold">${f.name}</span>
+          </button>
+        `
+      ).join("");
+
+      const modal = document.getElementById("profileModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    };
+
+    window.closeProfileModal = function () {
+      const modal = document.getElementById("profileModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    };
+
+    window.selectFriendProfile = function (name, color) {
+      currentUser = { name, color };
+      localStorage.setItem("cineboxd_active_user", JSON.stringify(currentUser));
+      updateUserBadgeUI();
+      closeProfileModal();
+    };
+
+    window.saveCustomProfile = function (e) {
+      e.preventDefault();
+      const name = document.getElementById("customUserNameInput").value.trim();
+      if (!name) return;
+      const palette = ["#059669", "#2563eb", "#db2777", "#d97706", "#7c3aed", "#0891b2"];
+      const color = palette[name.length % palette.length];
+      selectFriendProfile(name, color);
+      document.getElementById("customUserNameInput").value = "";
+    };
+
+    initCloudSync();
+  </script>
+</body>
+</html>
