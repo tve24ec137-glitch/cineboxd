@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>CineBoxd — Track & Review Shows With Friends</title>
+  <title>CineBoxd — Track, Watchlist & Review Shows With Friends</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <script>
@@ -47,7 +47,6 @@
     .poster-card:active .poster-border {
       border-color: #00e054;
     }
-    /* Hide scrollbars on horizontal mobile filter strips */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -95,24 +94,24 @@
 
       <!-- Search & Desktop Controls -->
       <div class="flex items-center gap-2 sm:gap-3 flex-1 sm:flex-initial justify-end">
-        <div class="relative flex-1 sm:flex-initial max-w-[210px] sm:max-w-none">
+        <div class="relative flex-1 sm:flex-initial max-w-[200px] sm:max-w-none">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400"></i>
           <input
             id="searchInput"
             type="text"
-            placeholder="Search title, genre, friend..."
+            placeholder="Filter title, year, friend..."
             oninput="renderApp()"
-            class="bg-[#14181c] text-white text-xs sm:text-sm pl-8 pr-3 py-1.5 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen w-full sm:w-60"
+            class="bg-[#14181c] text-white text-xs sm:text-sm pl-8 pr-3 py-1.5 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen w-full sm:w-56"
           />
         </div>
 
-        <!-- Desktop Log Button (Hidden on Mobile, replaced by bottom nav) -->
+        <!-- Desktop Log Button -->
         <button
           onclick="openLogModal()"
           class="hidden sm:flex bg-lbGreen hover:bg-[#00c448] text-black font-bold text-sm px-3.5 py-1.5 rounded-lg items-center gap-1.5 transition shadow shrink-0"
         >
           <i class="fa-solid fa-plus"></i>
-          <span>Log Show</span>
+          <span>Log / Watchlist</span>
         </button>
 
         <!-- Account / Google Auth Button -->
@@ -132,32 +131,48 @@
     </div>
   </header>
 
-  <!-- STATS & MULTI-FILTER BAR -->
-  <section class="max-w-6xl mx-auto w-full px-3.5 sm:px-4 pt-4 sm:pt-6 pb-2">
-    <!-- Top Heading & Quick Stats -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3">
-      <div>
-        <h1 class="text-white text-lg sm:text-2xl font-bold tracking-tight">Completed Movies & Series</h1>
-        <p class="text-[11px] sm:text-xs text-gray-400">Tap any poster to read friend reviews, check genres, or add your rating.</p>
+  <!-- PRIMARY VIEW SWITCHER (COMPLETED vs WATCHLIST) & FILTERS -->
+  <section class="max-w-6xl mx-auto w-full px-3.5 sm:px-4 pt-4 sm:pt-5 pb-2">
+    <!-- Main View Mode Tabs -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-lbBorder">
+      <div class="flex items-center gap-2 bg-[#1f262d] p-1 rounded-xl border border-lbBorder self-start">
+        <button
+          id="tab-COMPLETED"
+          onclick="setMainTab('COMPLETED')"
+          class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-2 bg-lbGreen text-black shadow"
+        >
+          <i class="fa-solid fa-circle-check"></i>
+          <span>Completed</span>
+          <span id="badgeCompletedCount" class="text-[11px] px-1.5 py-0.2 rounded-full bg-black/20 font-extrabold">0</span>
+        </button>
+        <button
+          id="tab-WATCHLIST"
+          onclick="setMainTab('WATCHLIST')"
+          class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-2 text-gray-300 hover:text-white"
+        >
+          <i class="fa-solid fa-bookmark"></i>
+          <span>Watchlist / Plan to Watch</span>
+          <span id="badgeWatchlistCount" class="text-[11px] px-1.5 py-0.2 rounded-full bg-lbBorder text-lbBlue font-extrabold">0</span>
+        </button>
       </div>
-      <!-- Live Mini Stats -->
+
+      <!-- Live Mini Stats & Starter Seed -->
       <div class="flex items-center gap-3 text-xs bg-lbCard/70 border border-lbBorder px-3 py-1.5 rounded-lg self-start sm:self-auto">
-        <span><strong id="statShowsCount" class="text-white">0</strong> Shows</span>
+        <span><strong id="statReviewsCount" class="text-lbGreen">0</strong> Total Entries</span>
         <span class="text-lbBorder">|</span>
-        <span><strong id="statReviewsCount" class="text-lbGreen">0</strong> Reviews</span>
         <button
           onclick="seedSampleShows()"
-          class="text-[11px] text-lbBlue hover:underline ml-1 font-semibold"
-          title="Load sample movies & series"
+          class="text-[11px] text-lbBlue hover:underline font-semibold flex items-center gap-1"
+          title="Load sample movies, series & watchlist items"
         >
-          + Samples
+          <i class="fa-solid fa-wand-magic-sparkles"></i>Load Samples
         </button>
       </div>
     </div>
 
-    <!-- Row 1: Type Tabs + Dropdown Filters (Scrollable on Mobile) -->
-    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 border-t border-lbBorder">
-      <button onclick="setMediaFilter('ALL')" id="filter-ALL" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-lbGreen text-black shrink-0">All</button>
+    <!-- Row 1: Type Tabs + Dropdown Filters -->
+    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-2.5">
+      <button onclick="setMediaFilter('ALL')" id="filter-ALL" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-lbGreen text-black shrink-0">All Types</button>
       <button onclick="setMediaFilter('Movie')" id="filter-Movie" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-lbCard text-gray-300 hover:text-white shrink-0">Movies</button>
       <button onclick="setMediaFilter('Series')" id="filter-Series" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-lbCard text-gray-300 hover:text-white shrink-0">Series</button>
 
@@ -185,10 +200,10 @@
         onchange="renderApp()"
         class="bg-lbCard text-gray-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen shrink-0 ml-auto"
       >
-        <option value="NEWEST">Sort: Recently Logged</option>
+        <option value="NEWEST">Sort: Recently Added</option>
         <option value="RATING_DESC">Sort: Highest Rated</option>
-        <option value="MOST_REVIEWED">Sort: Most Reviewed</option>
-        <option value="YEAR_DESC">Sort: Release Year</option>
+        <option value="MOST_REVIEWED">Sort: Most Activity</option>
+        <option value="YEAR_DESC">Sort: Release Year (Newest)</option>
       </select>
     </div>
 
@@ -199,87 +214,100 @@
   <!-- MAIN POSTER GRID -->
   <main class="max-w-6xl mx-auto w-full px-3.5 sm:px-4 py-3 flex-1">
     <div id="emptyState" class="hidden text-center py-14 px-4 bg-lbCard/50 rounded-xl border border-lbBorder my-4">
-      <i class="fa-solid fa-film text-4xl text-gray-500 mb-3"></i>
-      <h2 class="text-white font-bold text-lg">No matching shows found</h2>
-      <p class="text-xs sm:text-sm text-gray-400 max-w-md mx-auto mt-1 mb-5">
-        Log a movie or series with genre & language tags, or load sample shows to test the filters.
+      <i id="emptyStateIcon" class="fa-solid fa-film text-4xl text-gray-500 mb-3"></i>
+      <h2 id="emptyStateTitle" class="text-white font-bold text-lg">No shows found</h2>
+      <p id="emptyStateSub" class="text-xs sm:text-sm text-gray-400 max-w-md mx-auto mt-1 mb-5">
+        Use automatic search or manual entry to log completed shows or save titles to your Watchlist.
       </p>
       <div class="flex flex-wrap justify-center gap-3">
         <button onclick="openLogModal()" class="bg-lbGreen text-black font-bold text-xs sm:text-sm px-4 py-2.5 rounded-lg">
-          + Log Completed Show
+          + Add Movie or Series
         </button>
         <button onclick="seedSampleShows()" class="bg-lbBorder text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-lg hover:bg-gray-700">
-          Load Sample Reviews
+          Load Sample Library
         </button>
       </div>
     </div>
 
-    <!-- Responsive Grid: 2 cols on mobile, 3 on sm, 4 on md, 5 on lg -->
     <div id="posterGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-5"></div>
   </main>
 
-  <!-- MOBILE STICKY BOTTOM BAR (Smartphones Only) -->
-  <nav class="sm:hidden fixed bottom-0 inset-x-0 bg-[#1f262d]/95 backdrop-blur-md border-t border-lbBorder z-30 flex items-center justify-around py-2 px-4">
-    <button onclick="resetFilters(); window.scrollTo({top:0, behavior:'smooth'})" class="flex flex-col items-center gap-0.5 text-gray-300 active:text-lbGreen">
-      <i class="fa-solid fa-house text-base"></i>
-      <span class="text-[10px] font-semibold">Home</span>
+  <!-- MOBILE STICKY BOTTOM BAR -->
+  <nav class="sm:hidden fixed bottom-0 inset-x-0 bg-[#1f262d]/95 backdrop-blur-md border-t border-lbBorder z-30 flex items-center justify-around py-2 px-2">
+    <button onclick="setMainTab('COMPLETED'); window.scrollTo({top:0, behavior:'smooth'})" id="mobNavCompleted" class="flex flex-col items-center gap-0.5 text-lbGreen">
+      <i class="fa-solid fa-clapperboard text-base"></i>
+      <span class="text-[10px] font-bold">Watched</span>
+    </button>
+    <button onclick="setMainTab('WATCHLIST'); window.scrollTo({top:0, behavior:'smooth'})" id="mobNavWatchlist" class="flex flex-col items-center gap-0.5 text-gray-400">
+      <i class="fa-solid fa-bookmark text-base"></i>
+      <span class="text-[10px] font-semibold">Watchlist</span>
     </button>
     <button
       onclick="openLogModal()"
-      class="bg-lbGreen text-black font-black text-xs px-5 py-2.5 rounded-full shadow-lg flex items-center gap-1.5 -mt-4 border-4 border-[#14181c]"
+      class="bg-lbGreen text-black font-black text-xs px-4 py-2.5 rounded-full shadow-lg flex items-center gap-1 -mt-4 border-4 border-[#14181c]"
     >
       <i class="fa-solid fa-plus"></i>
-      <span>Log Show</span>
+      <span>Add</span>
     </button>
-    <button onclick="openProfileModal()" class="flex flex-col items-center gap-0.5 text-gray-300 active:text-lbGreen">
+    <button onclick="openProfileModal()" class="flex flex-col items-center gap-0.5 text-gray-400">
       <i class="fa-solid fa-user-circle text-base"></i>
-      <span id="mobileNavUserLabel" class="text-[10px] font-semibold max-w-[70px] truncate">Account</span>
+      <span id="mobileNavUserLabel" class="text-[10px] font-semibold max-w-[65px] truncate">Account</span>
     </button>
   </nav>
 
   <!-- FOOTER -->
   <footer class="border-t border-lbBorder mt-10 py-6 text-center text-xs text-gray-500">
     <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-      <span>CineBoxd — Shared Friends Movie & Series Diary</span>
-      <span>Google Accounts: Permanent • Guest Accounts: Auto-Expire in 30 Days</span>
+      <span>CineBoxd — Shared Friends Movie, Series & Watchlist Diary</span>
+      <span>Auto Poster Search (iTunes + TVMaze) + Manual Override</span>
     </div>
   </footer>
 
-  <!-- SHOW DETAILS & REVIEWS MODAL (Bottom Sheet on Mobile, Centered on Desktop) -->
+  <!-- SHOW DETAILS, REVIEWS & WATCHLIST MODAL -->
   <div id="detailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-lbCard border-t sm:border border-lbBorder rounded-t-2xl sm:rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
       <!-- Sticky Mobile Top Handle -->
       <div class="sticky top-0 bg-lbCard/95 backdrop-blur z-10 px-5 pt-3 pb-2 border-b border-lbBorder flex items-center justify-between sm:hidden">
-        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Show Details & Reviews</span>
+        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Show Details & Community Activity</span>
         <button onclick="closeDetailsModal()" class="text-gray-300 hover:text-white p-1">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
       <div class="p-4 sm:p-6 flex flex-col md:flex-row gap-5 sm:gap-6">
-        <!-- Poster & Action Column -->
+        <!-- Poster & Action Buttons Column -->
         <div class="flex sm:block gap-4 items-center md:w-48 flex-shrink-0">
           <div class="w-28 sm:w-44 md:w-48 aspect-[2/3] rounded-lg overflow-hidden border border-lbBorder shadow-lg bg-[#14181c] shrink-0">
             <img id="detailCover" src="" alt="Poster" class="w-full h-full object-cover" />
           </div>
 
-          <div class="flex-1 sm:mt-3">
-            <!-- Mobile Title Header next to poster -->
+          <div class="flex-1 sm:mt-3 space-y-2">
+            <!-- Mobile Header Info -->
             <div class="sm:hidden mb-2">
               <div class="flex flex-wrap items-center gap-1.5">
                 <span id="detailTypeBadgeMobile" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-lbBorder text-lbBlue">MOVIE</span>
                 <span id="detailLangBadgeMobile" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-lbGreen border border-lbGreen/30">English</span>
-                <span id="detailYearMobile" class="text-xs text-gray-400">2024</span>
+                <span id="detailYearMobile" class="text-xs font-bold text-amber-400">2024</span>
               </div>
               <h2 id="detailTitleMobile" class="text-lg font-black text-white mt-1 leading-snug">Show Title</h2>
             </div>
 
+            <!-- Primary Action: Add or Edit My Review -->
             <button
               id="reviewThisShowBtn"
               class="w-full bg-lbGreen hover:bg-[#00c448] text-black font-bold text-xs py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow"
             >
               <i class="fa-solid fa-pen-to-square"></i>
-              <span>Add My Review</span>
+              <span>Log / Edit My Review</span>
+            </button>
+
+            <!-- Secondary Action: Add to Watchlist -->
+            <button
+              id="watchlistThisShowBtn"
+              class="w-full bg-[#14181c] hover:bg-lbBorder text-lbBlue border border-lbBorder font-semibold text-xs py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5"
+            >
+              <i class="fa-solid fa-bookmark"></i>
+              <span>+ Add to My Watchlist</span>
             </button>
           </div>
         </div>
@@ -293,9 +321,9 @@
                 <div class="flex flex-wrap items-center gap-2">
                   <span id="detailTypeBadge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-lbBorder text-lbBlue">MOVIE</span>
                   <span id="detailLangBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-lbGreen border border-lbGreen/30">English</span>
-                  <span id="detailYear" class="text-xs text-gray-400">2024</span>
+                  <span id="detailYear" class="text-xs font-bold text-amber-400 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded">2024</span>
                 </div>
-                <h2 id="detailTitle" class="text-2xl font-black text-white mt-1">Show Title</h2>
+                <h2 id="detailTitle" class="text-2xl font-black text-white mt-1.5">Show Title</h2>
               </div>
               <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-white text-xl leading-none p-1">
                 <i class="fa-solid fa-xmark"></i>
@@ -309,12 +337,17 @@
             <div class="flex items-center gap-3 mt-3 bg-[#14181c] px-3.5 py-2.5 rounded-lg border border-lbBorder">
               <div id="detailAvgStars" class="text-lbGreen text-sm sm:text-base flex items-center gap-0.5"></div>
               <span id="detailAvgNumber" class="text-white font-bold text-xs sm:text-sm">4.5 / 5</span>
-              <span id="detailReviewCount" class="text-xs text-gray-400 ml-auto">3 reviews</span>
+              <span id="detailReviewCount" class="text-xs text-gray-400 ml-auto">0 reviews</span>
+            </div>
+
+            <!-- Watchlist Friends Pill Bar -->
+            <div id="detailWatchlistBar" class="hidden mt-2.5 bg-sky-950/30 border border-lbBlue/30 rounded-lg px-3 py-2 text-xs text-gray-200 flex items-center justify-between gap-2 flex-wrap">
+              <div class="flex items-center gap-1.5 flex-wrap" id="detailWatchlistUsers"></div>
             </div>
 
             <!-- Reviews List -->
             <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 mt-4 mb-2.5 border-b border-lbBorder pb-1.5">
-              Community Reviews
+              Completed Reviews & Notes
             </h3>
             <div id="detailReviewsList" class="space-y-3 max-h-80 overflow-y-auto pr-1"></div>
           </div>
@@ -323,48 +356,90 @@
     </div>
   </div>
 
-  <!-- LOG / CREATE / EDIT ENTRY MODAL -->
+  <!-- LOG / WATCHLIST / AUTO-SEARCH MODAL -->
   <div id="logModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-lbCard border-t sm:border border-lbBorder rounded-t-2xl sm:rounded-xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-4 sm:p-6 shadow-2xl">
+    <div class="bg-lbCard border-t sm:border border-lbBorder rounded-t-2xl sm:rounded-xl max-w-xl w-full max-h-[94vh] overflow-y-auto p-4 sm:p-6 shadow-2xl">
       <div class="flex items-center justify-between border-b border-lbBorder pb-3 mb-3.5">
         <h2 id="logModalHeading" class="text-white font-bold text-base sm:text-lg flex items-center gap-2">
           <i class="fa-solid fa-clapperboard text-lbGreen"></i>
-          <span>Log Completed Movie or Series</span>
+          <span>Add Movie or Series</span>
         </h2>
         <button onclick="closeLogModal()" class="text-gray-400 hover:text-white p-1">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
-      <!-- Quick Presets -->
-      <div class="mb-3.5">
-        <span class="text-[11px] uppercase tracking-wider text-gray-400 block mb-1.5">Quick Fill Popular Show:</span>
-        <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-          <button type="button" onclick="fillPreset('Manjummel Boys', 'Movie', '2024', 'Malayalam', ['Thriller', 'Drama'], 'https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder shrink-0">Manjummel Boys</button>
-          <button type="button" onclick="fillPreset('Dune: Part Two', 'Movie', '2024', 'English', ['Sci-Fi', 'Action'], 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder shrink-0">Dune: Part Two</button>
-          <button type="button" onclick="fillPreset('Breaking Bad', 'Series', '2008', 'English', ['Crime', 'Drama', 'Thriller'], 'https://image.tmdb.org/t/p/w500/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder shrink-0">Breaking Bad</button>
-          <button type="button" onclick="fillPreset('Arcane', 'Series', '2021', 'English', ['Anime', 'Sci-Fi', 'Action'], 'https://image.tmdb.org/t/p/w500/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder shrink-0">Arcane</button>
-        </div>
+      <!-- STEP 1: ENTRY STATUS SWITCHER (COMPLETED vs WATCHLIST) -->
+      <div class="grid grid-cols-2 gap-2 bg-[#14181c] p-1.5 rounded-xl border border-lbBorder mb-4">
+        <button
+          type="button"
+          id="statusBtn-COMPLETED"
+          onclick="setFormEntryStatus('COMPLETED')"
+          class="py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 bg-lbGreen text-black shadow transition"
+        >
+          <i class="fa-solid fa-star"></i>
+          <span>Completed Watching</span>
+        </button>
+        <button
+          type="button"
+          id="statusBtn-WATCHLIST"
+          onclick="setFormEntryStatus('WATCHLIST')"
+          class="py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 text-gray-300 hover:text-white transition"
+        >
+          <i class="fa-solid fa-bookmark"></i>
+          <span>Watchlist (Plan to Watch)</span>
+        </button>
       </div>
 
+      <!-- STEP 2: AUTOMATIC POSTER & METADATA SEARCH BOX (WITH MANUAL FALLBACK) -->
+      <div id="autoSearchContainer" class="mb-4 bg-[#14181c] p-3 rounded-xl border border-lbBorder">
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-[11px] font-bold uppercase tracking-wider text-lbBlue flex items-center gap-1.5">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Auto-Search Poster & Release Year</span>
+          </label>
+          <span class="text-[10px] text-gray-400">Or type manually below ↓</span>
+        </div>
+
+        <div class="relative">
+          <input
+            id="apiSearchInput"
+            type="text"
+            placeholder="Type a movie or series (e.g. Interstellar, Severance, Premalu)..."
+            oninput="handleAutoSearchInput(this.value)"
+            class="w-full bg-lbCard text-white text-xs sm:text-sm pl-3 pr-9 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbBlue"
+          />
+          <span id="apiSearchSpinner" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-lbBlue text-xs">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+          </span>
+        </div>
+
+        <!-- Live Search Results Dropdown -->
+        <div id="apiSearchResults" class="hidden mt-2 max-h-52 overflow-y-auto divide-y divide-lbBorder rounded-lg border border-lbBorder bg-lbCard"></div>
+      </div>
+
+      <!-- STEP 3: SHOW METADATA FORM (AUTO-FILLED OR MANUAL ENTRY) -->
       <form id="logForm" onsubmit="submitReviewForm(event)" class="space-y-3.5">
-        <!-- Title & Type -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
           <div class="sm:col-span-2">
             <label class="block text-xs font-semibold text-gray-300 mb-1">Show Title *</label>
-            <input id="inputTitle" type="text" required placeholder="e.g. Aavesham, Interstellar..." class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen" />
+            <input id="inputTitle" type="text" required placeholder="Enter title manually..." class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-300 mb-1">Type *</label>
-            <select id="inputType" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen">
+            <select id="inputType" class="w-full bg-[#14181c] text-white text-sm px-2.5 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen">
               <option value="Movie">Movie</option>
               <option value="Series">Series</option>
             </select>
           </div>
+          <div>
+            <label class="block text-xs font-semibold text-amber-400 mb-1">Release Year *</label>
+            <input id="inputYear" type="number" required min="1900" max="2035" placeholder="2024" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen" />
+          </div>
         </div>
 
-        <!-- Language, Year & Poster URL -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <!-- Language & Cover Image URL with Thumbnail Preview -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end">
           <div>
             <label class="block text-xs font-semibold text-gray-300 mb-1">Language *</label>
             <select id="inputLanguage" class="w-full bg-[#14181c] text-white text-sm px-2.5 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen">
@@ -380,71 +455,89 @@
               <option value="Other">Other</option>
             </select>
           </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-300 mb-1">Release Year</label>
-            <input id="inputYear" type="number" placeholder="2024" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen" />
-          </div>
-          <div class="col-span-2">
-            <label class="block text-xs font-semibold text-gray-300 mb-1">Cover Image URL (Optional)</label>
-            <input id="inputCover" type="url" placeholder="Auto-generates if blank" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen" />
+          <div class="sm:col-span-2 flex items-center gap-2.5">
+            <div class="flex-1">
+              <label class="block text-xs font-semibold text-gray-300 mb-1">Cover Poster URL (Auto-fills or paste link)</label>
+              <input
+                id="inputCover"
+                type="url"
+                oninput="updateFormPosterPreview()"
+                placeholder="Leaves clean title poster if blank"
+                class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen"
+              />
+            </div>
+            <img
+              id="formPosterPreview"
+              src="https://placehold.co/80x120/1f262d/00e054?text=Poster"
+              alt="Preview"
+              class="w-10 h-14 rounded object-cover border border-lbBorder shrink-0 mt-4 bg-[#14181c]"
+            />
           </div>
         </div>
 
         <!-- Multi-Select Genre Tags -->
         <div>
-          <label class="block text-xs font-semibold text-gray-300 mb-1.5">Select Genres (Tap up to 3):</label>
+          <label class="block text-xs font-semibold text-gray-300 mb-1.5">Genres (Tap up to 3):</label>
           <div id="formGenrePills" class="flex flex-wrap gap-1.5"></div>
         </div>
 
-        <!-- Half-Star Rating Selector & Heart Like -->
-        <div class="flex flex-wrap items-center justify-between gap-2 bg-[#14181c] p-3 rounded-lg border border-lbBorder">
-          <div>
-            <div class="flex items-center gap-2 mb-1">
-              <label class="text-xs font-semibold text-gray-300">Rating:</label>
-              <span id="ratingValueLabel" class="text-xs font-black text-lbGreen">5.0 ★</span>
+        <!-- COMPLETED ONLY SECTION: 5-STAR RATING & SPOILER -->
+        <div id="completedRatingSection" class="space-y-3.5">
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-[#14181c] p-3 rounded-lg border border-lbBorder">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <label class="text-xs font-semibold text-gray-300">Your Rating:</label>
+                <span id="ratingValueLabel" class="text-xs font-black text-lbGreen">5.0 ★</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div id="starSelector" class="flex items-center gap-1 text-2xl cursor-pointer"></div>
+                <button
+                  type="button"
+                  onclick="adjustHalfStar()"
+                  class="text-[11px] bg-lbCard hover:bg-lbBorder text-gray-300 px-2 py-1 rounded border border-lbBorder font-semibold"
+                >
+                  +½ ★
+                </button>
+              </div>
             </div>
-            <div class="flex items-center gap-2">
-              <div id="starSelector" class="flex items-center gap-1 text-2xl cursor-pointer"></div>
-              <button
-                type="button"
-                onclick="adjustHalfStar()"
-                class="text-[11px] bg-lbCard hover:bg-lbBorder text-gray-300 px-2 py-1 rounded border border-lbBorder font-semibold"
-                title="Toggle .5 half star"
-              >
-                +½ ★
-              </button>
-            </div>
-          </div>
 
-          <div class="flex items-center gap-4">
-            <label class="flex items-center gap-1.5 cursor-pointer text-xs text-gray-300 select-none">
-              <input id="inputSpoiler" type="checkbox" class="accent-lbOrange w-3.5 h-3.5 rounded" />
-              <span>Spoiler?</span>
-            </label>
-            <div class="text-center">
+            <div class="flex items-center gap-4">
+              <label class="flex items-center gap-1.5 cursor-pointer text-xs text-gray-300 select-none">
+                <input id="inputSpoiler" type="checkbox" class="accent-lbOrange w-3.5 h-3.5 rounded" />
+                <span>Spoiler?</span>
+              </label>
               <button type="button" id="likeToggleBtn" onclick="toggleHeartLike()" class="text-2xl text-lbOrange hover:scale-110 transition">
                 <i class="fa-solid fa-heart"></i>
               </button>
             </div>
           </div>
+
+          <div>
+            <label id="reviewTextareaLabel" class="block text-xs font-semibold text-gray-300 mb-1">Your Review *</label>
+            <textarea
+              id="inputReview"
+              rows="3"
+              placeholder="Write your thoughts on this movie or series..."
+              class="w-full bg-[#14181c] text-white text-sm p-3 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen"
+            ></textarea>
+          </div>
         </div>
 
-        <!-- Review Text -->
-        <div>
-          <label class="block text-xs font-semibold text-gray-300 mb-1">Your Review *</label>
-          <textarea
-            id="inputReview"
-            rows="3"
-            required
-            placeholder="What stood out? Direction, music, climax..."
-            class="w-full bg-[#14181c] text-white text-sm p-3 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen"
-          ></textarea>
+        <!-- WATCHLIST ONLY NOTE -->
+        <div id="watchlistNoteSection" class="hidden bg-sky-950/30 border border-lbBlue/40 rounded-lg p-3 text-xs text-gray-300">
+          <div class="flex items-center gap-2 text-lbBlue font-bold mb-1">
+            <i class="fa-solid fa-bookmark"></i>
+            <span>Saving to Watchlist / Plan to Watch</span>
+          </div>
+          <p class="text-[11px] text-gray-400">
+            This show will appear in the <strong>Watchlist</strong> tab with its poster, release year, language, and genres. Once you finish watching it, tap the poster and click <strong>"Mark Watched & Write Review"</strong>!
+          </p>
         </div>
 
         <div class="flex items-center justify-between pt-1">
           <div>
-            <span class="text-xs text-gray-400">Posting as: <strong id="postingAsLabel" class="text-white">Guest</strong></span>
-            <span id="postingExpiryNotice" class="block text-[10px] text-amber-400">Guest reviews expire after 30 days</span>
+            <span class="text-xs text-gray-400">User: <strong id="postingAsLabel" class="text-white">Guest</strong></span>
+            <span id="postingExpiryNotice" class="block text-[10px] text-amber-400">Guest entries expire after 30 days</span>
           </div>
           <div class="flex gap-2">
             <button type="button" onclick="closeLogModal()" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-300 hover:bg-lbBorder">Cancel</button>
@@ -574,10 +667,14 @@
 
     // STATE
     let allReviews = [];
+    let activeMainTab = "COMPLETED"; // 'COMPLETED' | 'WATCHLIST'
+    let formEntryStatus = "COMPLETED"; // 'COMPLETED' | 'WATCHLIST'
     let selectedRating = 5;
     let isHeartLiked = true;
     let selectedFormGenres = ["Drama"];
     let editingReviewId = null;
+    let searchDebounceTimer = null;
+    let latestSearchResults = [];
 
     let activeMediaFilter = "ALL";
     let activeGenreFilter = "ALL";
@@ -604,6 +701,7 @@
         language: "English",
         genres: ["Sci-Fi", "Drama"],
         coverUrl: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+        status: "COMPLETED",
         rating: 5,
         liked: true,
         spoiler: false,
@@ -621,6 +719,7 @@
         language: "Malayalam",
         genres: ["Drama", "Romance"],
         coverUrl: "https://image.tmdb.org/t/p/w500/zM26ba17c2vR24PjK3eF72mR2H1.jpg",
+        status: "COMPLETED",
         rating: 4.5,
         liked: true,
         spoiler: false,
@@ -638,6 +737,7 @@
         language: "English",
         genres: ["Sci-Fi", "Thriller", "Mystery"],
         coverUrl: "https://image.tmdb.org/t/p/w500/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
+        status: "COMPLETED",
         rating: 5,
         liked: true,
         spoiler: true,
@@ -646,7 +746,25 @@
         userColor: "#db2777",
         isAnonymous: false,
         expiresAt: null,
-        createdAt: Date.now() - 3600000 * 5
+        createdAt: Date.now() - 3600000 * 8
+      },
+      {
+        title: "Dune: Part Two",
+        type: "Movie",
+        year: "2024",
+        language: "English",
+        genres: ["Sci-Fi", "Action"],
+        coverUrl: "https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
+        status: "WATCHLIST",
+        rating: 0,
+        liked: false,
+        spoiler: false,
+        reviewText: "",
+        userName: "Vysakh",
+        userColor: "#059669",
+        isAnonymous: false,
+        expiresAt: null,
+        createdAt: Date.now() - 3600000 * 2
       }
     ];
 
@@ -658,7 +776,7 @@
       setTimeout(() => {
         toast.classList.add("hidden");
         toast.classList.remove("flex");
-      }, 2600);
+      }, 2800);
     }
 
     function pickColorForName(name) {
@@ -669,6 +787,175 @@
       return palette[sum % palette.length];
     }
 
+    // AUTOMATIC POSTER & METADATA SEARCH (iTunes API for Movies + TVMaze API for Series)
+    window.handleAutoSearchInput = function (query) {
+      clearTimeout(searchDebounceTimer);
+      const resultsBox = document.getElementById("apiSearchResults");
+      const spinner = document.getElementById("apiSearchSpinner");
+      const trimmed = (query || "").trim();
+
+      if (trimmed.length < 2) {
+        resultsBox.classList.add("hidden");
+        spinner.classList.add("hidden");
+        return;
+      }
+
+      spinner.classList.remove("hidden");
+      searchDebounceTimer = setTimeout(() => {
+        performMetadataLookup(trimmed);
+      }, 380);
+    };
+
+    function mapExternalGenres(rawGenres = []) {
+      const matched = [];
+      const joined = rawGenres.join(" ").toLowerCase();
+      if (joined.includes("sci-fi") || joined.includes("science fiction")) matched.push("Sci-Fi");
+      if (joined.includes("thriller") || joined.includes("suspense")) matched.push("Thriller");
+      if (joined.includes("drama")) matched.push("Drama");
+      if (joined.includes("action") || joined.includes("adventure")) matched.push("Action");
+      if (joined.includes("comedy")) matched.push("Comedy");
+      if (joined.includes("crime")) matched.push("Crime");
+      if (joined.includes("mystery")) matched.push("Mystery");
+      if (joined.includes("romance")) matched.push("Romance");
+      if (joined.includes("horror")) matched.push("Horror");
+      if (joined.includes("anime") || joined.includes("animation")) matched.push("Anime");
+      if (joined.includes("fantasy")) matched.push("Fantasy");
+      return matched.length ? matched.slice(0, 3) : ["Drama"];
+    }
+
+    async function performMetadataLookup(query) {
+      const spinner = document.getElementById("apiSearchSpinner");
+      const resultsBox = document.getElementById("apiSearchResults");
+
+      try {
+        const encoded = encodeURIComponent(query);
+        const [itunesRes, tvmazeRes] = await Promise.allSettled([
+          fetch(`https://itunes.apple.com/search?term=${encoded}&media=movie&limit=5`).then((r) => r.json()),
+          fetch(`https://api.tvmaze.com/search/shows?q=${encoded}`).then((r) => r.json())
+        ]);
+
+        const combined = [];
+
+        // Parse Movies from iTunes
+        if (itunesRes.status === "fulfilled" && Array.isArray(itunesRes.value.results)) {
+          itunesRes.value.results.forEach((m) => {
+            if (!m.trackName) return;
+            const hiResPoster = m.artworkUrl100
+              ? m.artworkUrl100.replace("100x100bb", "600x900bb")
+              : "";
+            const releaseYear = m.releaseDate ? m.releaseDate.slice(0, 4) : "";
+            combined.push({
+              title: m.trackName,
+              type: "Movie",
+              year: releaseYear,
+              language: "English",
+              genres: mapExternalGenres([m.primaryGenreName || "Drama"]),
+              coverUrl: hiResPoster
+            });
+          });
+        }
+
+        // Parse Series from TVMaze
+        if (tvmazeRes.status === "fulfilled" && Array.isArray(tvmazeRes.value)) {
+          tvmazeRes.value.slice(0, 5).forEach((item) => {
+            const s = item.show;
+            if (!s || !s.name) return;
+            const poster = s.image ? s.image.original || s.image.medium : "";
+            const releaseYear = s.premiered ? s.premiered.slice(0, 4) : "";
+            const supportedLangs = ["English", "Malayalam", "Hindi", "Tamil", "Telugu", "Korean", "Japanese", "Spanish", "French"];
+            const lang = supportedLangs.includes(s.language) ? s.language : "English";
+            combined.push({
+              title: s.name,
+              type: "Series",
+              year: releaseYear,
+              language: lang,
+              genres: mapExternalGenres(s.genres || []),
+              coverUrl: poster
+            });
+          });
+        }
+
+        latestSearchResults = combined.slice(0, 8);
+        spinner.classList.add("hidden");
+
+        if (latestSearchResults.length === 0) {
+          resultsBox.innerHTML = `
+            <div class="p-3 text-xs text-gray-400 flex items-center justify-between">
+              <span>No exact match found. You can enter the details manually below!</span>
+              <button type="button" onclick="useQueryAsManualTitle()" class="text-lbGreen font-bold hover:underline">Use "${query}"</button>
+            </div>
+          `;
+          resultsBox.classList.remove("hidden");
+          return;
+        }
+
+        resultsBox.innerHTML = latestSearchResults
+          .map(
+            (item, idx) => `
+            <button
+              type="button"
+              onclick="selectAutoSearchResult(${idx})"
+              class="w-full p-2.5 hover:bg-[#14181c] flex items-center gap-3 text-left transition"
+            >
+              <img
+                src="${item.coverUrl || getFallbackPoster(item.title)}"
+                alt="${item.title}"
+                class="w-9 h-13 rounded object-cover border border-lbBorder bg-[#14181c] shrink-0"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-white font-bold text-xs sm:text-sm truncate">${item.title}</span>
+                  ${item.year ? `<span class="text-[11px] font-bold text-amber-400 shrink-0">(${item.year})</span>` : ""}
+                </div>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-lbBorder text-lbBlue">${item.type}</span>
+                  <span class="text-[10px] text-gray-400">${item.language}</span>
+                  <span class="text-[10px] text-gray-500 truncate">• ${item.genres.join(", ")}</span>
+                </div>
+              </div>
+              <span class="text-[11px] text-lbGreen font-bold shrink-0">Auto-Fill</span>
+            </button>
+          `
+          )
+          .join("");
+        resultsBox.classList.remove("hidden");
+      } catch (err) {
+        spinner.classList.add("hidden");
+        resultsBox.classList.add("hidden");
+      }
+    }
+
+    window.useQueryAsManualTitle = function () {
+      const q = document.getElementById("apiSearchInput").value.trim();
+      if (q) document.getElementById("inputTitle").value = q;
+      document.getElementById("apiSearchResults").classList.add("hidden");
+    };
+
+    window.selectAutoSearchResult = function (index) {
+      const item = latestSearchResults[index];
+      if (!item) return;
+
+      document.getElementById("inputTitle").value = item.title;
+      document.getElementById("inputType").value = item.type;
+      document.getElementById("inputYear").value = item.year || new Date().getFullYear();
+      document.getElementById("inputLanguage").value = item.language || "English";
+      document.getElementById("inputCover").value = item.coverUrl || "";
+      selectedFormGenres = item.genres && item.genres.length ? item.genres : ["Drama"];
+      renderFormGenrePills();
+      updateFormPosterPreview();
+
+      document.getElementById("apiSearchResults").classList.add("hidden");
+      document.getElementById("apiSearchInput").value = "";
+      showToast(`Auto-filled "${item.title}" (${item.year || "N/A"})`);
+    };
+
+    window.updateFormPosterPreview = function () {
+      const url = document.getElementById("inputCover").value.trim();
+      const title = document.getElementById("inputTitle").value.trim() || "Poster";
+      document.getElementById("formPosterPreview").src = url || getFallbackPoster(title);
+    };
+
+    // AUTHENTICATION HANDLERS
     async function handleAuthUser(user) {
       if (!user) {
         try {
@@ -867,6 +1154,28 @@
       }
     }
 
+    // MAIN TAB SWITCHER (COMPLETED vs WATCHLIST)
+    window.setMainTab = function (tab) {
+      activeMainTab = tab;
+      const compBtn = document.getElementById("tab-COMPLETED");
+      const watchBtn = document.getElementById("tab-WATCHLIST");
+      const mobComp = document.getElementById("mobNavCompleted");
+      const mobWatch = document.getElementById("mobNavWatchlist");
+
+      if (tab === "COMPLETED") {
+        compBtn.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-2 bg-lbGreen text-black shadow";
+        watchBtn.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-2 text-gray-300 hover:text-white";
+        mobComp.className = "flex flex-col items-center gap-0.5 text-lbGreen";
+        mobWatch.className = "flex flex-col items-center gap-0.5 text-gray-400";
+      } else {
+        watchBtn.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-2 bg-lbBlue text-black shadow";
+        compBtn.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-2 text-gray-300 hover:text-white";
+        mobWatch.className = "flex flex-col items-center gap-0.5 text-lbBlue";
+        mobComp.className = "flex flex-col items-center gap-0.5 text-gray-400";
+      }
+      renderApp();
+    };
+
     // GENRE FILTER BAR & FORM PILLS
     function renderGenreFilterBar() {
       const bar = document.getElementById("genreFilterBar");
@@ -931,7 +1240,7 @@
       renderFormGenrePills();
     };
 
-    // GROUP REVIEWS BY SHOW TITLE
+    // GROUP ENTRIES BY SHOW TITLE
     function getGroupedShows() {
       const map = new Map();
       for (const rev of allReviews) {
@@ -944,14 +1253,16 @@
             type: rev.type || "Movie",
             year: rev.year || "",
             language: rev.language || "English",
-            genres: Array.isArray(rev.genres) && rev.genres.length ? rev.genres : ["Drama"],
+            genres: Array.isArray(rev.genres) && rev.genres.length ? [...rev.genres] : ["Drama"],
             coverUrl: rev.coverUrl || "",
             latestCreatedAt: rev.createdAt || 0,
-            reviews: []
+            completedReviews: [],
+            watchlistEntries: []
           });
         }
         const group = map.get(key);
         if (!group.coverUrl && rev.coverUrl) group.coverUrl = rev.coverUrl;
+        if (!group.year && rev.year) group.year = rev.year;
         if (!group.language && rev.language) group.language = rev.language;
         if (Array.isArray(rev.genres)) {
           rev.genres.forEach((g) => {
@@ -961,7 +1272,11 @@
         if ((rev.createdAt || 0) > group.latestCreatedAt) {
           group.latestCreatedAt = rev.createdAt;
         }
-        group.reviews.push(rev);
+        if (rev.status === "WATCHLIST") {
+          group.watchlistEntries.push(rev);
+        } else {
+          group.completedReviews.push(rev);
+        }
       }
       return Array.from(map.values());
     }
@@ -971,7 +1286,6 @@
       return `https://placehold.co/400x600/1f262d/00e054?text=${encoded}`;
     }
 
-    // HALF-STAR RENDERER
     function renderStarsHTML(rating) {
       const val = Math.round((Number(rating) || 0) * 2) / 2;
       let html = "";
@@ -990,36 +1304,58 @@
     window.renderApp = function () {
       const searchVal = (document.getElementById("searchInput").value || "").toLowerCase().trim();
       const sortMode = document.getElementById("sortSelect").value;
-      const shows = getGroupedShows();
+      const allShows = getGroupedShows();
 
-      // Update Quick Stats
-      document.getElementById("statShowsCount").textContent = shows.length;
+      // Update Tab Counts
+      const completedShowsCount = allShows.filter((s) => s.completedReviews.length > 0).length;
+      const watchlistShowsCount = allShows.filter((s) => s.watchlistEntries.length > 0).length;
+      document.getElementById("badgeCompletedCount").textContent = completedShowsCount;
+      document.getElementById("badgeWatchlistCount").textContent = watchlistShowsCount;
       document.getElementById("statReviewsCount").textContent = allReviews.length;
 
-      const filtered = shows.filter((show) => {
+      // Filter by active tab (Completed vs Watchlist)
+      const tabShows = allShows.filter((show) =>
+        activeMainTab === "COMPLETED"
+          ? show.completedReviews.length > 0
+          : show.watchlistEntries.length > 0
+      );
+
+      const filtered = tabShows.filter((show) => {
         if (activeMediaFilter !== "ALL" && show.type !== activeMediaFilter) return false;
         if (activeLanguageFilter !== "ALL" && (show.language || "English") !== activeLanguageFilter) return false;
         if (activeGenreFilter !== "ALL" && !(show.genres || []).includes(activeGenreFilter)) return false;
         if (activeUserFilter !== "ALL") {
-          const hasUser = show.reviews.some((r) => r.userName === activeUserFilter);
-          if (!hasUser) return false;
+          const relevantList = activeMainTab === "COMPLETED" ? show.completedReviews : show.watchlistEntries;
+          if (!relevantList.some((r) => r.userName === activeUserFilter)) return false;
         }
         if (searchVal) {
           const matchTitle = show.title.toLowerCase().includes(searchVal);
+          const matchYear = String(show.year || "").toLowerCase().includes(searchVal);
           const matchLang = (show.language || "").toLowerCase().includes(searchVal);
           const matchGenre = (show.genres || []).some((g) => g.toLowerCase().includes(searchVal));
-          const matchUser = show.reviews.some((r) => (r.userName || "").toLowerCase().includes(searchVal));
-          return matchTitle || matchLang || matchGenre || matchUser;
+          const matchUser = [...show.completedReviews, ...show.watchlistEntries].some((r) =>
+            (r.userName || "").toLowerCase().includes(searchVal)
+          );
+          return matchTitle || matchYear || matchLang || matchGenre || matchUser;
         }
         return true;
       });
 
       // Sort
       filtered.sort((a, b) => {
-        const avgA = a.reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / a.reviews.length;
-        const avgB = b.reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / b.reviews.length;
+        const avgA = a.completedReviews.length
+          ? a.completedReviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / a.completedReviews.length
+          : 0;
+        const avgB = b.completedReviews.length
+          ? b.completedReviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / b.completedReviews.length
+          : 0;
         if (sortMode === "RATING_DESC") return avgB - avgA;
-        if (sortMode === "MOST_REVIEWED") return b.reviews.length - a.reviews.length;
+        if (sortMode === "MOST_REVIEWED") {
+          return (
+            b.completedReviews.length + b.watchlistEntries.length -
+            (a.completedReviews.length + a.watchlistEntries.length)
+          );
+        }
         if (sortMode === "YEAR_DESC") return (Number(b.year) || 0) - (Number(a.year) || 0);
         return b.latestCreatedAt - a.latestCreatedAt;
       });
@@ -1029,6 +1365,12 @@
 
       if (filtered.length === 0) {
         grid.innerHTML = "";
+        document.getElementById("emptyStateIcon").className =
+          activeMainTab === "WATCHLIST"
+            ? "fa-solid fa-bookmark text-4xl text-lbBlue mb-3"
+            : "fa-solid fa-film text-4xl text-gray-500 mb-3";
+        document.getElementById("emptyStateTitle").textContent =
+          activeMainTab === "WATCHLIST" ? "Your Watchlist is empty" : "No completed shows found";
         empty.classList.remove("hidden");
         return;
       }
@@ -1037,19 +1379,35 @@
 
       grid.innerHTML = filtered
         .map((show) => {
-          const avgRating =
-            show.reviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / show.reviews.length;
+          const avgRating = show.completedReviews.length
+            ? show.completedReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) /
+              show.completedReviews.length
+            : 0;
           const cover = show.coverUrl || getFallbackPoster(show.title);
-          const uniqueReviewers = [];
+          const activeList = activeMainTab === "COMPLETED" ? show.completedReviews : show.watchlistEntries;
+
+          const uniqueUsers = [];
           const seen = new Set();
-          for (const r of show.reviews) {
+          for (const r of activeList) {
             if (!seen.has(r.userName)) {
               seen.add(r.userName);
-              uniqueReviewers.push(r);
+              uniqueUsers.push(r);
             }
           }
 
           const topGenres = (show.genres || []).slice(0, 2);
+
+          const bottomMetaHTML =
+            activeMainTab === "COMPLETED"
+              ? `<div class="flex items-center gap-1">
+                   <div class="flex items-center gap-0.5 text-[11px] sm:text-xs">
+                     ${renderStarsHTML(avgRating)}
+                   </div>
+                   <span class="text-[10px] text-gray-400 font-semibold">${avgRating.toFixed(1)}</span>
+                 </div>`
+              : `<span class="text-[10px] font-bold text-lbBlue flex items-center gap-1">
+                   <i class="fa-solid fa-bookmark"></i>Watchlist (${show.watchlistEntries.length})
+                 </span>`;
 
           return `
             <div class="poster-card cursor-pointer group flex flex-col" onclick="openShowDetails('${show.key.replace(/'/g, "\\'")}')">
@@ -1071,7 +1429,7 @@
                   </span>
                 </div>
 
-                <!-- Bottom Gradient Bar with Review Count -->
+                <!-- Bottom Gradient Bar with Genres & Activity Count -->
                 <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2.5 flex items-end justify-between">
                   <div class="flex flex-wrap gap-1">
                     ${topGenres
@@ -1082,22 +1440,25 @@
                       .join("")}
                   </div>
                   <span class="text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0">
-                    <i class="fa-regular fa-comment text-lbGreen"></i>${show.reviews.length}
+                    <i class="fa-regular fa-comment text-lbGreen"></i>${show.completedReviews.length}
                   </span>
                 </div>
               </div>
 
+              <!-- Title + Release Year Pill -->
               <div class="mt-2 px-0.5">
-                <h3 class="text-white font-bold text-xs sm:text-sm truncate" title="${show.title}">${show.title}</h3>
+                <div class="flex items-baseline justify-between gap-1.5">
+                  <h3 class="text-white font-bold text-xs sm:text-sm truncate" title="${show.title}">${show.title}</h3>
+                  ${
+                    show.year
+                      ? `<span class="text-[10px] sm:text-[11px] font-bold text-amber-400 shrink-0">${show.year}</span>`
+                      : ""
+                  }
+                </div>
                 <div class="flex items-center justify-between mt-1">
-                  <div class="flex items-center gap-1">
-                    <div class="flex items-center gap-0.5 text-[11px] sm:text-xs">
-                      ${renderStarsHTML(avgRating)}
-                    </div>
-                    <span class="text-[10px] text-gray-400 font-semibold">${avgRating.toFixed(1)}</span>
-                  </div>
+                  ${bottomMetaHTML}
                   <div class="flex -space-x-1.5">
-                    ${uniqueReviewers
+                    ${uniqueUsers
                       .slice(0, 3)
                       .map((u) =>
                         u.userPhoto
@@ -1120,6 +1481,7 @@
         .join("");
     };
 
+    // SHOW DETAILS MODAL
     window.openShowDetails = function (showKey) {
       currentlyOpenShowKey = showKey;
       refreshOpenDetailsModal();
@@ -1136,17 +1498,19 @@
         return;
       }
 
-      const avg = show.reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / show.reviews.length;
+      const avg = show.completedReviews.length
+        ? show.completedReviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) /
+          show.completedReviews.length
+        : 0;
       const cover = show.coverUrl || getFallbackPoster(show.title);
 
       document.getElementById("detailCover").src = cover;
-      // Desktop & Mobile header sync
       document.getElementById("detailTypeBadge").textContent = show.type;
       document.getElementById("detailTypeBadgeMobile").textContent = show.type;
       document.getElementById("detailLangBadge").textContent = show.language || "English";
       document.getElementById("detailLangBadgeMobile").textContent = show.language || "English";
-      document.getElementById("detailYear").textContent = show.year || "";
-      document.getElementById("detailYearMobile").textContent = show.year || "";
+      document.getElementById("detailYear").textContent = show.year || "Year N/A";
+      document.getElementById("detailYearMobile").textContent = show.year ? `(${show.year})` : "";
       document.getElementById("detailTitle").textContent = show.title;
       document.getElementById("detailTitleMobile").textContent = show.title;
 
@@ -1158,16 +1522,80 @@
         .join("");
 
       document.getElementById("detailAvgStars").innerHTML = renderStarsHTML(avg);
-      document.getElementById("detailAvgNumber").textContent = `${avg.toFixed(1)} / 5`;
-      document.getElementById("detailReviewCount").textContent = `${show.reviews.length} ${show.reviews.length === 1 ? "review" : "reviews"}`;
+      document.getElementById("detailAvgNumber").textContent = show.completedReviews.length
+        ? `${avg.toFixed(1)} / 5`
+        : "No ratings yet";
+      document.getElementById("detailReviewCount").textContent = `${show.completedReviews.length} ${
+        show.completedReviews.length === 1 ? "review" : "reviews"
+      }`;
 
-      document.getElementById("reviewThisShowBtn").onclick = () => {
-        closeDetailsModal();
-        openLogModal(show);
-      };
+      // Check if current user already has a Completed review or Watchlist item for this show
+      const myCompletedReview = show.completedReviews.find((r) => r.userId === currentUser.uid);
+      const myWatchlistItem = show.watchlistEntries.find((r) => r.userId === currentUser.uid);
 
+      const reviewBtn = document.getElementById("reviewThisShowBtn");
+      if (myCompletedReview) {
+        reviewBtn.innerHTML = '<i class="fa-solid fa-pen"></i><span>Edit My Review</span>';
+        reviewBtn.onclick = () => {
+          closeDetailsModal();
+          openLogModal(null, myCompletedReview);
+        };
+      } else if (myWatchlistItem) {
+        reviewBtn.innerHTML = '<i class="fa-solid fa-check-double"></i><span>Mark Watched & Write Review</span>';
+        reviewBtn.onclick = () => {
+          closeDetailsModal();
+          // Convert Watchlist item into a Completed review on save
+          openLogModal(null, { ...myWatchlistItem, status: "COMPLETED", rating: 5, liked: true });
+        };
+      } else {
+        reviewBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i><span>Add My Review</span>';
+        reviewBtn.onclick = () => {
+          closeDetailsModal();
+          openLogModal(show, null, "COMPLETED");
+        };
+      }
+
+      const watchBtn = document.getElementById("watchlistThisShowBtn");
+      if (myWatchlistItem) {
+        watchBtn.innerHTML = '<i class="fa-solid fa-trash-can text-red-400"></i><span>Remove from My Watchlist</span>';
+        watchBtn.onclick = () => deleteReviewEntry(myWatchlistItem.id);
+      } else if (myCompletedReview) {
+        watchBtn.classList.add("hidden");
+      } else {
+        watchBtn.classList.remove("hidden");
+        watchBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i><span>+ Add to My Watchlist</span>';
+        watchBtn.onclick = () => quickAddShowToWatchlist(show);
+      }
+
+      // Render Watchlist Bar inside modal
+      const wlBar = document.getElementById("detailWatchlistBar");
+      const wlUsers = document.getElementById("detailWatchlistUsers");
+      if (show.watchlistEntries.length > 0) {
+        wlBar.classList.remove("hidden");
+        wlUsers.innerHTML =
+          `<span class="text-lbBlue font-bold"><i class="fa-solid fa-bookmark mr-1"></i>On Watchlist:</span>` +
+          show.watchlistEntries
+            .map(
+              (w) =>
+                `<span class="bg-[#14181c] border border-lbBorder px-2 py-0.5 rounded-full text-[11px] text-white">${w.userName}</span>`
+            )
+            .join("");
+      } else {
+        wlBar.classList.add("hidden");
+      }
+
+      // Render Completed Reviews List
       const listEl = document.getElementById("detailReviewsList");
-      listEl.innerHTML = show.reviews
+      if (show.completedReviews.length === 0) {
+        listEl.innerHTML = `
+          <div class="text-center py-6 bg-[#14181c] rounded-lg border border-lbBorder text-xs text-gray-400">
+            No completed reviews yet. Be the first friend to watch and review <strong>${show.title}</strong>!
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = show.completedReviews
         .map((r) => {
           const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "";
           const badge = r.isAnonymous
@@ -1180,11 +1608,11 @@
 
           const isOwner = r.userId && r.userId === currentUser.uid;
           const ownerActionsHTML = isOwner
-            ? `<div class="flex items-center gap-2.5 ml-1">
-                 <button onclick="openEditReview('${r.id}')" class="text-gray-400 hover:text-lbBlue text-xs" title="Edit your review">
-                   <i class="fa-solid fa-pen"></i>
+            ? `<div class="flex items-center gap-2 ml-1">
+                 <button onclick="openEditReview('${r.id}')" class="text-xs bg-lbCard hover:bg-lbBorder text-lbBlue px-2 py-0.5 rounded border border-lbBorder flex items-center gap-1" title="Update your review">
+                   <i class="fa-solid fa-pen text-[10px]"></i><span>Edit</span>
                  </button>
-                 <button onclick="deleteReviewEntry('${r.id}')" class="text-gray-400 hover:text-red-400 text-xs" title="Delete your review">
+                 <button onclick="deleteReviewEntry('${r.id}')" class="text-gray-400 hover:text-red-400 text-xs px-1" title="Delete your review">
                    <i class="fa-regular fa-trash-can"></i>
                  </button>
                </div>`
@@ -1222,6 +1650,44 @@
         .join("");
     }
 
+    window.QuickAddWatchlistBusy = false;
+    async function quickAddShowToWatchlist(show) {
+      const now = Date.now();
+      const payload = {
+        title: show.title,
+        type: show.type || "Movie",
+        language: show.language || "English",
+        genres: show.genres || ["Drama"],
+        year: show.year || "",
+        coverUrl: show.coverUrl || getFallbackPoster(show.title),
+        status: "WATCHLIST",
+        rating: 0,
+        liked: false,
+        spoiler: false,
+        reviewText: "",
+        userId: currentUser.uid,
+        userName: currentUser.name,
+        userPhoto: currentUser.photoURL || "",
+        userColor: currentUser.color,
+        isAnonymous: currentUser.isAnonymous,
+        expiresAt: currentUser.isAnonymous ? now + THIRTY_DAYS_MS : null,
+        createdAt: now
+      };
+
+      if (useLocalStorageFallback) {
+        allReviews.unshift({ ...payload, id: "local_" + now });
+        saveFallbackLocal();
+        showToast(`Added "${show.title}" to Watchlist!`);
+      } else {
+        try {
+          await addDoc(reviewsCollectionRef, payload);
+          showToast(`Added "${show.title}" to Watchlist!`);
+        } catch (err) {
+          alert("Could not save to Firestore.");
+        }
+      }
+    }
+
     window.closeDetailsModal = function () {
       currentlyOpenShowKey = null;
       const modal = document.getElementById("detailsModal");
@@ -1229,13 +1695,46 @@
       modal.classList.remove("flex");
     };
 
-    // OPEN LOG MODAL (NEW OR EDIT)
-    window.openLogModal = function (prefillShow = null, reviewToEdit = null) {
+    // FORM STATUS TOGGLE (COMPLETED vs WATCHLIST)
+    window.setFormEntryStatus = function (status) {
+      formEntryStatus = status;
+      const compBtn = document.getElementById("statusBtn-COMPLETED");
+      const watchBtn = document.getElementById("statusBtn-WATCHLIST");
+      const ratingSec = document.getElementById("completedRatingSection");
+      const watchNote = document.getElementById("watchlistNoteSection");
+      const reviewInput = document.getElementById("inputReview");
+      const submitBtn = document.getElementById("submitReviewBtn");
+
+      if (status === "COMPLETED") {
+        compBtn.className = "py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 bg-lbGreen text-black shadow transition";
+        watchBtn.className = "py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 text-gray-300 hover:text-white transition";
+        ratingSec.classList.remove("hidden");
+        watchNote.classList.add("hidden");
+        reviewInput.required = true;
+        submitBtn.textContent = editingReviewId ? "Update Review" : "Save Completed Review";
+      } else {
+        watchBtn.className = "py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 bg-lbBlue text-black shadow transition";
+        compBtn.className = "py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 text-gray-300 hover:text-white transition";
+        ratingSec.classList.add("hidden");
+        watchNote.classList.remove("hidden");
+        reviewInput.required = false;
+        submitBtn.textContent = editingReviewId ? "Update Watchlist Item" : "Save to Watchlist";
+      }
+    };
+
+    // OPEN LOG MODAL (NEW, PREFILL, OR EDIT)
+    window.openLogModal = function (prefillShow = null, reviewToEdit = null, defaultStatus = null) {
       editingReviewId = reviewToEdit ? reviewToEdit.id : null;
+      document.getElementById("apiSearchInput").value = "";
+      document.getElementById("apiSearchResults").classList.add("hidden");
+
+      const initialStatus = reviewToEdit
+        ? reviewToEdit.status || "COMPLETED"
+        : defaultStatus || activeMainTab || "COMPLETED";
+
       document.getElementById("logModalHeading").innerHTML = reviewToEdit
-        ? '<i class="fa-solid fa-pen text-lbBlue"></i><span>Edit Your Review</span>'
-        : '<i class="fa-solid fa-clapperboard text-lbGreen"></i><span>Log Completed Movie or Series</span>';
-      document.getElementById("submitReviewBtn").textContent = reviewToEdit ? "Update Review" : "Save Entry";
+        ? '<i class="fa-solid fa-pen text-lbBlue"></i><span>Update Your Entry</span>'
+        : '<i class="fa-solid fa-clapperboard text-lbGreen"></i><span>Log or Watchlist a Show</span>';
 
       document.getElementById("postingAsLabel").textContent = currentUser.name;
       const expiryNotice = document.getElementById("postingExpiryNotice");
@@ -1243,7 +1742,7 @@
         expiryNotice.textContent = `Guest session — expires in ${getDaysRemaining(currentUser.expiresAt)}d`;
         expiryNotice.className = "block text-[10px] text-amber-400";
       } else {
-        expiryNotice.textContent = "Google Verified — permanent review";
+        expiryNotice.textContent = "Google Verified — permanent account";
         expiryNotice.className = "block text-[10px] text-lbGreen";
       }
 
@@ -1251,34 +1750,43 @@
         document.getElementById("inputTitle").value = reviewToEdit.title || "";
         document.getElementById("inputType").value = reviewToEdit.type || "Movie";
         document.getElementById("inputLanguage").value = reviewToEdit.language || "English";
-        document.getElementById("inputYear").value = reviewToEdit.year || "";
+        document.getElementById("inputYear").value = reviewToEdit.year || new Date().getFullYear();
         document.getElementById("inputCover").value = reviewToEdit.coverUrl || "";
         document.getElementById("inputReview").value = reviewToEdit.reviewText || "";
         document.getElementById("inputSpoiler").checked = Boolean(reviewToEdit.spoiler);
         selectedRating = Number(reviewToEdit.rating) || 5;
         isHeartLiked = Boolean(reviewToEdit.liked);
-        selectedFormGenres = Array.isArray(reviewToEdit.genres) && reviewToEdit.genres.length ? [...reviewToEdit.genres] : ["Drama"];
+        selectedFormGenres =
+          Array.isArray(reviewToEdit.genres) && reviewToEdit.genres.length
+            ? [...reviewToEdit.genres]
+            : ["Drama"];
       } else if (prefillShow) {
         document.getElementById("inputTitle").value = prefillShow.title;
         document.getElementById("inputType").value = prefillShow.type || "Movie";
         document.getElementById("inputLanguage").value = prefillShow.language || "English";
-        document.getElementById("inputYear").value = prefillShow.year || "";
+        document.getElementById("inputYear").value = prefillShow.year || new Date().getFullYear();
         document.getElementById("inputCover").value = prefillShow.coverUrl || "";
         document.getElementById("inputReview").value = "";
         document.getElementById("inputSpoiler").checked = false;
         selectedRating = 5;
         isHeartLiked = true;
-        selectedFormGenres = Array.isArray(prefillShow.genres) && prefillShow.genres.length ? [...prefillShow.genres] : ["Drama"];
+        selectedFormGenres =
+          Array.isArray(prefillShow.genres) && prefillShow.genres.length
+            ? [...prefillShow.genres]
+            : ["Drama"];
       } else {
         document.getElementById("logForm").reset();
+        document.getElementById("inputYear").value = new Date().getFullYear();
         selectedRating = 5;
         isHeartLiked = true;
         selectedFormGenres = ["Drama"];
       }
 
+      setFormEntryStatus(initialStatus);
       renderFormGenrePills();
       renderStarSelector();
       updateHeartUI();
+      updateFormPosterPreview();
 
       const modal = document.getElementById("logModal");
       modal.classList.remove("hidden");
@@ -1297,16 +1805,6 @@
       const modal = document.getElementById("logModal");
       modal.classList.add("hidden");
       modal.classList.remove("flex");
-    };
-
-    window.fillPreset = function (title, type, year, language, genres, cover) {
-      document.getElementById("inputTitle").value = title;
-      document.getElementById("inputType").value = type;
-      document.getElementById("inputYear").value = year;
-      document.getElementById("inputLanguage").value = language;
-      document.getElementById("inputCover").value = cover;
-      selectedFormGenres = genres;
-      renderFormGenrePills();
     };
 
     function renderStarSelector() {
@@ -1369,7 +1867,8 @@
       const reviewText = document.getElementById("inputReview").value.trim();
       const spoiler = document.getElementById("inputSpoiler").checked;
 
-      if (!title || !reviewText) return;
+      if (!title) return;
+      if (formEntryStatus === "COMPLETED" && !reviewText) return;
 
       const now = Date.now();
       const payload = {
@@ -1379,10 +1878,11 @@
         genres: selectedFormGenres.length ? selectedFormGenres : ["Drama"],
         year,
         coverUrl,
-        rating: selectedRating,
-        liked: isHeartLiked,
-        spoiler,
-        reviewText,
+        status: formEntryStatus,
+        rating: formEntryStatus === "COMPLETED" ? selectedRating : 0,
+        liked: formEntryStatus === "COMPLETED" ? isHeartLiked : false,
+        spoiler: formEntryStatus === "COMPLETED" ? spoiler : false,
+        reviewText: formEntryStatus === "COMPLETED" ? reviewText : "",
         userId: currentUser.uid,
         userName: currentUser.name,
         userPhoto: currentUser.photoURL || "",
@@ -1393,24 +1893,25 @@
 
       const targetEditId = editingReviewId;
       closeLogModal();
+      setMainTab(formEntryStatus);
 
       if (useLocalStorageFallback) {
         if (targetEditId) {
           allReviews = allReviews.map((r) => (r.id === targetEditId ? { ...r, ...payload } : r));
-          showToast("Review updated!");
+          showToast("Entry updated!");
         } else {
           allReviews.unshift({ ...payload, id: "local_" + now, createdAt: now });
-          showToast("Show logged!");
+          showToast(formEntryStatus === "WATCHLIST" ? "Saved to Watchlist!" : "Review logged!");
         }
         saveFallbackLocal();
       } else {
         try {
           if (targetEditId) {
             await updateDoc(doc(db, "cineboxd_reviews", targetEditId), payload);
-            showToast("Review updated!");
+            showToast("Entry updated!");
           } else {
             await addDoc(reviewsCollectionRef, { ...payload, createdAt: now });
-            showToast("Show logged!");
+            showToast(formEntryStatus === "WATCHLIST" ? "Saved to Watchlist!" : "Review logged!");
           }
         } catch (err) {
           alert("Could not save to Firestore. Check your Firebase Console Firestore Rules.");
@@ -1422,13 +1923,13 @@
       if (useLocalStorageFallback) {
         allReviews = allReviews.filter((r) => r.id !== id);
         saveFallbackLocal();
-        showToast("Review deleted");
+        showToast("Entry deleted");
       } else {
         try {
           await deleteDoc(doc(db, "cineboxd_reviews", id));
-          showToast("Review deleted");
+          showToast("Entry deleted");
         } catch (err) {
-          alert("You can only delete your own reviews.");
+          alert("You can only delete your own entries.");
         }
       }
     };
@@ -1443,7 +1944,7 @@
           });
         }
         saveFallbackLocal();
-        showToast("Sample shows loaded!");
+        showToast("Sample library loaded!");
       } else {
         try {
           for (const item of SEED_REVIEWS) {
@@ -1452,7 +1953,7 @@
               userId: currentUser.uid
             });
           }
-          showToast("Sample shows loaded!");
+          showToast("Sample library loaded!");
         } catch (err) {
           console.error("Failed to seed sample shows:", err);
         }
@@ -1492,10 +1993,10 @@
       activeGenreFilter = "ALL";
       renderGenreFilterBar();
       setMediaFilter("ALL");
+      setMainTab("COMPLETED");
     };
 
     function updateFilterDropdowns() {
-      // Friends Dropdown
       const userSelect = document.getElementById("userFilterSelect");
       const currentUserVal = userSelect.value;
       const names = Array.from(new Set(allReviews.map((r) => r.userName).filter(Boolean)));
@@ -1504,7 +2005,6 @@
         names.map((n) => `<option value="${n}">${n}</option>`).join("");
       if (names.includes(currentUserVal)) userSelect.value = currentUserVal;
 
-      // Languages Dropdown
       const langSelect = document.getElementById("languageFilterSelect");
       const currentLangVal = langSelect.value;
       const langs = Array.from(new Set(allReviews.map((r) => r.language || "English").filter(Boolean)));
@@ -1540,7 +2040,7 @@
         const daysLeft = getDaysRemaining(currentUser.expiresAt);
         pill.textContent = `Guest (${daysLeft}d left)`;
         pill.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/40";
-        subtext.textContent = `Anonymous session & reviews auto-expire in ${daysLeft} days.`;
+        subtext.textContent = `Anonymous session & entries auto-expire in ${daysLeft} days.`;
         signInSec.classList.remove("hidden");
         signOutSec.classList.add("hidden");
       } else {
@@ -1562,7 +2062,6 @@
       modal.classList.remove("flex");
     };
 
-    // Close modals with Escape key on desktop
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         closeDetailsModal();
