@@ -2,7 +2,7 @@
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>CineBoxd — Track & Review Shows With Friends</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -29,22 +29,35 @@
       background-color: #14181c;
       color: #9ab;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
     .poster-card {
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .poster-card:hover {
-      transform: translateY(-4px);
+    @media (min-width: 640px) {
+      .poster-card:hover {
+        transform: translateY(-4px);
+      }
     }
     .poster-border {
       border: 2px solid rgba(255, 255, 255, 0.12);
       transition: border-color 0.2s ease;
     }
-    .poster-card:hover .poster-border {
+    .poster-card:hover .poster-border,
+    .poster-card:active .poster-border {
       border-color: #00e054;
     }
+    /* Hide scrollbars on horizontal mobile filter strips */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
     ::-webkit-scrollbar {
-      width: 8px;
+      width: 6px;
+      height: 6px;
     }
     ::-webkit-scrollbar-track {
       background: #14181c;
@@ -53,40 +66,50 @@
       background: #2c3440;
       border-radius: 4px;
     }
+    .spoiler-blur {
+      filter: blur(6px);
+      user-select: none;
+      transition: filter 0.25s ease;
+    }
+    .spoiler-blur.revealed {
+      filter: blur(0);
+      user-select: auto;
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col pb-20 sm:pb-0">
 
   <!-- TOP NAVIGATION -->
   <header class="bg-[#1f262d]/95 border-b border-lbBorder sticky top-0 z-30 backdrop-blur">
-    <div class="max-w-6xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-3">
+    <div class="max-w-6xl mx-auto px-3.5 sm:px-4 py-3 flex items-center justify-between gap-2">
       <!-- Brand Logo -->
-      <div class="flex items-center gap-3 cursor-pointer" onclick="resetFilters()">
-        <div class="flex items-center gap-1">
-          <span class="w-3.5 h-3.5 rounded-full bg-lbOrange inline-block"></span>
-          <span class="w-3.5 h-3.5 rounded-full bg-lbGreen inline-block -ml-1"></span>
-          <span class="w-3.5 h-3.5 rounded-full bg-lbBlue inline-block -ml-1"></span>
+      <div class="flex items-center gap-2.5 cursor-pointer shrink-0" onclick="resetFilters()">
+        <div class="flex items-center">
+          <span class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-lbOrange inline-block"></span>
+          <span class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-lbGreen inline-block -ml-1"></span>
+          <span class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-lbBlue inline-block -ml-1"></span>
         </div>
-        <span class="text-white font-black tracking-wider text-xl">CINEBOXD</span>
-        <span id="syncStatus" class="text-[11px] px-2 py-0.5 rounded-full bg-lbBorder text-gray-300">Connecting...</span>
+        <span class="text-white font-black tracking-wider text-lg sm:text-xl">CINEBOXD</span>
+        <span id="syncStatus" class="text-[10px] px-2 py-0.5 rounded-full bg-lbBorder text-gray-300 hidden md:inline-block">Connecting...</span>
       </div>
 
-      <!-- Search & Controls -->
-      <div class="flex items-center gap-3 flex-wrap">
-        <div class="relative">
+      <!-- Search & Desktop Controls -->
+      <div class="flex items-center gap-2 sm:gap-3 flex-1 sm:flex-initial justify-end">
+        <div class="relative flex-1 sm:flex-initial max-w-[210px] sm:max-w-none">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400"></i>
           <input
             id="searchInput"
             type="text"
-            placeholder="Search movies, series, friends..."
+            placeholder="Search title, genre, friend..."
             oninput="renderApp()"
-            class="bg-[#14181c] text-white text-sm pl-8 pr-3 py-1.5 rounded-md border border-lbBorder focus:outline-none focus:border-lbGreen w-44 sm:w-60"
+            class="bg-[#14181c] text-white text-xs sm:text-sm pl-8 pr-3 py-1.5 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen w-full sm:w-60"
           />
         </div>
 
+        <!-- Desktop Log Button (Hidden on Mobile, replaced by bottom nav) -->
         <button
           onclick="openLogModal()"
-          class="bg-lbGreen hover:bg-[#00c448] text-black font-bold text-sm px-3.5 py-1.5 rounded-md flex items-center gap-1.5 transition shadow"
+          class="hidden sm:flex bg-lbGreen hover:bg-[#00c448] text-black font-bold text-sm px-3.5 py-1.5 rounded-lg items-center gap-1.5 transition shadow shrink-0"
         >
           <i class="fa-solid fa-plus"></i>
           <span>Log Show</span>
@@ -95,106 +118,181 @@
         <!-- Account / Google Auth Button -->
         <button
           onclick="openProfileModal()"
-          class="flex items-center gap-2 bg-[#14181c] hover:bg-lbBorder border border-lbBorder px-3 py-1.5 rounded-md transition"
+          class="flex items-center gap-2 bg-[#14181c] hover:bg-lbBorder border border-lbBorder px-2.5 sm:px-3 py-1.5 rounded-lg transition shrink-0"
           title="Account & Sign-In Settings"
         >
           <img id="currentUserPhoto" src="" alt="" class="w-6 h-6 rounded-full object-cover hidden" />
           <span id="currentUserAvatar" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white bg-emerald-600">G</span>
-          <div class="text-left leading-tight">
-            <span id="currentUserName" class="text-white text-xs font-bold block">Guest</span>
+          <div class="text-left leading-tight hidden sm:block">
+            <span id="currentUserName" class="text-white text-xs font-bold block max-w-[90px] truncate">Guest</span>
             <span id="currentAccountBadge" class="text-[10px] text-amber-400 block">30d Guest</span>
           </div>
-          <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 ml-0.5"></i>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- HERO / FILTER BAR -->
-  <section class="max-w-6xl mx-auto w-full px-4 pt-6 pb-4">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-lbBorder pb-4">
+  <!-- STATS & MULTI-FILTER BAR -->
+  <section class="max-w-6xl mx-auto w-full px-3.5 sm:px-4 pt-4 sm:pt-6 pb-2">
+    <!-- Top Heading & Quick Stats -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3">
       <div>
-        <h1 class="text-white text-2xl font-bold tracking-tight">Completed Movies & Series</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Sign in with Google for a permanent profile, or browse as a 30-day temporary Guest.</p>
+        <h1 class="text-white text-lg sm:text-2xl font-bold tracking-tight">Completed Movies & Series</h1>
+        <p class="text-[11px] sm:text-xs text-gray-400">Tap any poster to read friend reviews, check genres, or add your rating.</p>
       </div>
-
-      <!-- Filter Tabs -->
-      <div class="flex flex-wrap items-center gap-2">
-        <button onclick="setMediaFilter('ALL')" id="filter-ALL" class="px-3 py-1 rounded text-xs font-bold bg-lbGreen text-black">All Shows</button>
-        <button onclick="setMediaFilter('Movie')" id="filter-Movie" class="px-3 py-1 rounded text-xs font-semibold bg-lbCard text-gray-300 hover:text-white">Movies</button>
-        <button onclick="setMediaFilter('Series')" id="filter-Series" class="px-3 py-1 rounded text-xs font-semibold bg-lbCard text-gray-300 hover:text-white">Series</button>
-
-        <select
-          id="userFilterSelect"
-          onchange="setUserFilter(this.value)"
-          class="bg-lbCard text-gray-200 text-xs font-semibold px-3 py-1.5 rounded border border-lbBorder focus:outline-none focus:border-lbGreen ml-1"
-        >
-          <option value="ALL">All Friends</option>
-        </select>
-
+      <!-- Live Mini Stats -->
+      <div class="flex items-center gap-3 text-xs bg-lbCard/70 border border-lbBorder px-3 py-1.5 rounded-lg self-start sm:self-auto">
+        <span><strong id="statShowsCount" class="text-white">0</strong> Shows</span>
+        <span class="text-lbBorder">|</span>
+        <span><strong id="statReviewsCount" class="text-lbGreen">0</strong> Reviews</span>
         <button
           onclick="seedSampleShows()"
-          class="text-xs bg-lbCard hover:bg-lbBorder text-lbBlue border border-lbBorder px-2.5 py-1 rounded transition"
-          title="Load starter movies and series"
+          class="text-[11px] text-lbBlue hover:underline ml-1 font-semibold"
+          title="Load sample movies & series"
         >
-          <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Load Samples
+          + Samples
         </button>
       </div>
     </div>
+
+    <!-- Row 1: Type Tabs + Dropdown Filters (Scrollable on Mobile) -->
+    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 border-t border-lbBorder">
+      <button onclick="setMediaFilter('ALL')" id="filter-ALL" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-lbGreen text-black shrink-0">All</button>
+      <button onclick="setMediaFilter('Movie')" id="filter-Movie" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-lbCard text-gray-300 hover:text-white shrink-0">Movies</button>
+      <button onclick="setMediaFilter('Series')" id="filter-Series" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-lbCard text-gray-300 hover:text-white shrink-0">Series</button>
+
+      <!-- Language Filter -->
+      <select
+        id="languageFilterSelect"
+        onchange="setLanguageFilter(this.value)"
+        class="bg-lbCard text-gray-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen shrink-0"
+      >
+        <option value="ALL">All Languages</option>
+      </select>
+
+      <!-- Friend Filter -->
+      <select
+        id="userFilterSelect"
+        onchange="setUserFilter(this.value)"
+        class="bg-lbCard text-gray-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen shrink-0"
+      >
+        <option value="ALL">All Friends</option>
+      </select>
+
+      <!-- Sort By -->
+      <select
+        id="sortSelect"
+        onchange="renderApp()"
+        class="bg-lbCard text-gray-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen shrink-0 ml-auto"
+      >
+        <option value="NEWEST">Sort: Recently Logged</option>
+        <option value="RATING_DESC">Sort: Highest Rated</option>
+        <option value="MOST_REVIEWED">Sort: Most Reviewed</option>
+        <option value="YEAR_DESC">Sort: Release Year</option>
+      </select>
+    </div>
+
+    <!-- Row 2: Horizontal Swipeable Genre Pills -->
+    <div id="genreFilterBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1.5 border-b border-lbBorder"></div>
   </section>
 
   <!-- MAIN POSTER GRID -->
-  <main class="max-w-6xl mx-auto w-full px-4 py-4 flex-1">
-    <div id="emptyState" class="hidden text-center py-16 bg-lbCard/50 rounded-xl border border-lbBorder my-4">
+  <main class="max-w-6xl mx-auto w-full px-3.5 sm:px-4 py-3 flex-1">
+    <div id="emptyState" class="hidden text-center py-14 px-4 bg-lbCard/50 rounded-xl border border-lbBorder my-4">
       <i class="fa-solid fa-film text-4xl text-gray-500 mb-3"></i>
-      <h2 class="text-white font-bold text-lg">No shows logged yet</h2>
-      <p class="text-sm text-gray-400 max-w-md mx-auto mt-1 mb-5">
-        Start logging the movies and series you and your friends have completed watching, or load sample shows to test it out.
+      <h2 class="text-white font-bold text-lg">No matching shows found</h2>
+      <p class="text-xs sm:text-sm text-gray-400 max-w-md mx-auto mt-1 mb-5">
+        Log a movie or series with genre & language tags, or load sample shows to test the filters.
       </p>
-      <div class="flex justify-center gap-3">
-        <button onclick="openLogModal()" class="bg-lbGreen text-black font-bold text-sm px-4 py-2 rounded-md">
-          + Log First Show
+      <div class="flex flex-wrap justify-center gap-3">
+        <button onclick="openLogModal()" class="bg-lbGreen text-black font-bold text-xs sm:text-sm px-4 py-2.5 rounded-lg">
+          + Log Completed Show
         </button>
-        <button onclick="seedSampleShows()" class="bg-lbBorder text-white font-semibold text-sm px-4 py-2 rounded-md hover:bg-gray-700">
-          Load Sample Friends' Reviews
+        <button onclick="seedSampleShows()" class="bg-lbBorder text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-lg hover:bg-gray-700">
+          Load Sample Reviews
         </button>
       </div>
     </div>
 
-    <div id="posterGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5"></div>
+    <!-- Responsive Grid: 2 cols on mobile, 3 on sm, 4 on md, 5 on lg -->
+    <div id="posterGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-5"></div>
   </main>
 
+  <!-- MOBILE STICKY BOTTOM BAR (Smartphones Only) -->
+  <nav class="sm:hidden fixed bottom-0 inset-x-0 bg-[#1f262d]/95 backdrop-blur-md border-t border-lbBorder z-30 flex items-center justify-around py-2 px-4">
+    <button onclick="resetFilters(); window.scrollTo({top:0, behavior:'smooth'})" class="flex flex-col items-center gap-0.5 text-gray-300 active:text-lbGreen">
+      <i class="fa-solid fa-house text-base"></i>
+      <span class="text-[10px] font-semibold">Home</span>
+    </button>
+    <button
+      onclick="openLogModal()"
+      class="bg-lbGreen text-black font-black text-xs px-5 py-2.5 rounded-full shadow-lg flex items-center gap-1.5 -mt-4 border-4 border-[#14181c]"
+    >
+      <i class="fa-solid fa-plus"></i>
+      <span>Log Show</span>
+    </button>
+    <button onclick="openProfileModal()" class="flex flex-col items-center gap-0.5 text-gray-300 active:text-lbGreen">
+      <i class="fa-solid fa-user-circle text-base"></i>
+      <span id="mobileNavUserLabel" class="text-[10px] font-semibold max-w-[70px] truncate">Account</span>
+    </button>
+  </nav>
+
   <!-- FOOTER -->
-  <footer class="border-t border-lbBorder mt-12 py-6 text-center text-xs text-gray-500">
+  <footer class="border-t border-lbBorder mt-10 py-6 text-center text-xs text-gray-500">
     <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
       <span>CineBoxd — Shared Friends Movie & Series Diary</span>
-      <span>Google Accounts: Permanent • Anonymous Guest Accounts: Auto-Expire in 30 Days</span>
+      <span>Google Accounts: Permanent • Guest Accounts: Auto-Expire in 30 Days</span>
     </div>
   </footer>
 
-  <!-- SHOW DETAILS & REVIEWS MODAL -->
-  <div id="detailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-lbCard border border-lbBorder rounded-xl max-w-3xl w-full overflow-hidden shadow-2xl my-8">
-      <div class="p-6 flex flex-col md:flex-row gap-6">
-        <div class="w-40 sm:w-48 flex-shrink-0 mx-auto md:mx-0">
-          <div class="aspect-[2/3] rounded-lg overflow-hidden border border-lbBorder shadow-lg bg-[#14181c]">
+  <!-- SHOW DETAILS & REVIEWS MODAL (Bottom Sheet on Mobile, Centered on Desktop) -->
+  <div id="detailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-lbCard border-t sm:border border-lbBorder rounded-t-2xl sm:rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <!-- Sticky Mobile Top Handle -->
+      <div class="sticky top-0 bg-lbCard/95 backdrop-blur z-10 px-5 pt-3 pb-2 border-b border-lbBorder flex items-center justify-between sm:hidden">
+        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Show Details & Reviews</span>
+        <button onclick="closeDetailsModal()" class="text-gray-300 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-4 sm:p-6 flex flex-col md:flex-row gap-5 sm:gap-6">
+        <!-- Poster & Action Column -->
+        <div class="flex sm:block gap-4 items-center md:w-48 flex-shrink-0">
+          <div class="w-28 sm:w-44 md:w-48 aspect-[2/3] rounded-lg overflow-hidden border border-lbBorder shadow-lg bg-[#14181c] shrink-0">
             <img id="detailCover" src="" alt="Poster" class="w-full h-full object-cover" />
           </div>
-          <button
-            id="reviewThisShowBtn"
-            class="w-full mt-3 bg-lbGreen hover:bg-[#00c448] text-black font-bold text-xs py-2.5 px-3 rounded-md transition flex items-center justify-center gap-1.5"
-          >
-            <i class="fa-solid fa-pen-to-square"></i>
-            <span>Add My Review</span>
-          </button>
+
+          <div class="flex-1 sm:mt-3">
+            <!-- Mobile Title Header next to poster -->
+            <div class="sm:hidden mb-2">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span id="detailTypeBadgeMobile" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-lbBorder text-lbBlue">MOVIE</span>
+                <span id="detailLangBadgeMobile" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-lbGreen border border-lbGreen/30">English</span>
+                <span id="detailYearMobile" class="text-xs text-gray-400">2024</span>
+              </div>
+              <h2 id="detailTitleMobile" class="text-lg font-black text-white mt-1 leading-snug">Show Title</h2>
+            </div>
+
+            <button
+              id="reviewThisShowBtn"
+              class="w-full bg-lbGreen hover:bg-[#00c448] text-black font-bold text-xs py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow"
+            >
+              <i class="fa-solid fa-pen-to-square"></i>
+              <span>Add My Review</span>
+            </button>
+          </div>
         </div>
 
+        <!-- Right Info & Friend Reviews -->
         <div class="flex-1 flex flex-col justify-between">
           <div>
-            <div class="flex items-start justify-between gap-3">
+            <!-- Desktop Header -->
+            <div class="hidden sm:flex items-start justify-between gap-3">
               <div>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                   <span id="detailTypeBadge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-lbBorder text-lbBlue">MOVIE</span>
+                  <span id="detailLangBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-lbGreen border border-lbGreen/30">English</span>
                   <span id="detailYear" class="text-xs text-gray-400">2024</span>
                 </div>
                 <h2 id="detailTitle" class="text-2xl font-black text-white mt-1">Show Title</h2>
@@ -204,103 +302,153 @@
               </button>
             </div>
 
+            <!-- Genre Tags Row -->
+            <div id="detailGenresRow" class="flex flex-wrap gap-1.5 mt-1 sm:mt-2"></div>
+
+            <!-- Average Rating Bar -->
             <div class="flex items-center gap-3 mt-3 bg-[#14181c] px-3.5 py-2.5 rounded-lg border border-lbBorder">
-              <div id="detailAvgStars" class="text-lbGreen text-base flex items-center gap-0.5"></div>
-              <span id="detailAvgNumber" class="text-white font-bold text-sm">4.5 / 5</span>
-              <span id="detailReviewCount" class="text-xs text-gray-400 ml-auto">3 friend reviews</span>
+              <div id="detailAvgStars" class="text-lbGreen text-sm sm:text-base flex items-center gap-0.5"></div>
+              <span id="detailAvgNumber" class="text-white font-bold text-xs sm:text-sm">4.5 / 5</span>
+              <span id="detailReviewCount" class="text-xs text-gray-400 ml-auto">3 reviews</span>
             </div>
 
-            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 mt-5 mb-2.5 border-b border-lbBorder pb-1.5">
-              Reviews Logged by Friends
+            <!-- Reviews List -->
+            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 mt-4 mb-2.5 border-b border-lbBorder pb-1.5">
+              Community Reviews
             </h3>
-            <div id="detailReviewsList" class="space-y-3 max-h-72 overflow-y-auto pr-1"></div>
+            <div id="detailReviewsList" class="space-y-3 max-h-80 overflow-y-auto pr-1"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- LOG / CREATE NEW ENTRY MODAL -->
-  <div id="logModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-lbCard border border-lbBorder rounded-xl max-w-lg w-full p-6 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-lbBorder pb-3 mb-4">
-        <h2 class="text-white font-bold text-lg flex items-center gap-2">
+  <!-- LOG / CREATE / EDIT ENTRY MODAL -->
+  <div id="logModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-lbCard border-t sm:border border-lbBorder rounded-t-2xl sm:rounded-xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-4 sm:p-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-lbBorder pb-3 mb-3.5">
+        <h2 id="logModalHeading" class="text-white font-bold text-base sm:text-lg flex items-center gap-2">
           <i class="fa-solid fa-clapperboard text-lbGreen"></i>
           <span>Log Completed Movie or Series</span>
         </h2>
-        <button onclick="closeLogModal()" class="text-gray-400 hover:text-white">
+        <button onclick="closeLogModal()" class="text-gray-400 hover:text-white p-1">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
-      <div class="mb-4">
-        <span class="text-[11px] uppercase tracking-wider text-gray-400 block mb-1.5">Quick Fill Popular Show (Optional):</span>
-        <div class="flex flex-wrap gap-1.5">
-          <button type="button" onclick="fillPreset('Dune: Part Two', 'Movie', '2024', 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder">Dune: Part Two</button>
-          <button type="button" onclick="fillPreset('Breaking Bad', 'Series', '2008', 'https://image.tmdb.org/t/p/w500/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder">Breaking Bad</button>
-          <button type="button" onclick="fillPreset('Oppenheimer', 'Movie', '2023', 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder">Oppenheimer</button>
-          <button type="button" onclick="fillPreset('Arcane', 'Series', '2021', 'https://image.tmdb.org/t/p/w500/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder">Arcane</button>
+      <!-- Quick Presets -->
+      <div class="mb-3.5">
+        <span class="text-[11px] uppercase tracking-wider text-gray-400 block mb-1.5">Quick Fill Popular Show:</span>
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          <button type="button" onclick="fillPreset('Manjummel Boys', 'Movie', '2024', 'Malayalam', ['Thriller', 'Drama'], 'https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder shrink-0">Manjummel Boys</button>
+          <button type="button" onclick="fillPreset('Dune: Part Two', 'Movie', '2024', 'English', ['Sci-Fi', 'Action'], 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder shrink-0">Dune: Part Two</button>
+          <button type="button" onclick="fillPreset('Breaking Bad', 'Series', '2008', 'English', ['Crime', 'Drama', 'Thriller'], 'https://image.tmdb.org/t/p/w500/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder shrink-0">Breaking Bad</button>
+          <button type="button" onclick="fillPreset('Arcane', 'Series', '2021', 'English', ['Anime', 'Sci-Fi', 'Action'], 'https://image.tmdb.org/t/p/w500/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg')" class="text-xs bg-[#14181c] hover:bg-lbBorder text-gray-300 px-2.5 py-1 rounded border border-lbBorder shrink-0">Arcane</button>
         </div>
       </div>
 
-      <form id="logForm" onsubmit="submitReviewForm(event)" class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <form id="logForm" onsubmit="submitReviewForm(event)" class="space-y-3.5">
+        <!-- Title & Type -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <div class="sm:col-span-2">
-            <label class="block text-xs font-semibold text-gray-300 mb-1">Title *</label>
-            <input id="inputTitle" type="text" required placeholder="e.g. Interstellar" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded border border-lbBorder focus:outline-none focus:border-lbGreen" />
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Show Title *</label>
+            <input id="inputTitle" type="text" required placeholder="e.g. Aavesham, Interstellar..." class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-300 mb-1">Type *</label>
-            <select id="inputType" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded border border-lbBorder focus:outline-none focus:border-lbGreen">
+            <select id="inputType" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen">
               <option value="Movie">Movie</option>
               <option value="Series">Series</option>
             </select>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <!-- Language, Year & Poster URL -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Language *</label>
+            <select id="inputLanguage" class="w-full bg-[#14181c] text-white text-sm px-2.5 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen">
+              <option value="English">English</option>
+              <option value="Malayalam">Malayalam</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Tamil">Tamil</option>
+              <option value="Telugu">Telugu</option>
+              <option value="Korean">Korean</option>
+              <option value="Japanese">Japanese</option>
+              <option value="Spanish">Spanish</option>
+              <option value="French">French</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
           <div>
             <label class="block text-xs font-semibold text-gray-300 mb-1">Release Year</label>
-            <input id="inputYear" type="number" placeholder="2024" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded border border-lbBorder focus:outline-none focus:border-lbGreen" />
+            <input id="inputYear" type="number" placeholder="2024" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen" />
           </div>
-          <div class="sm:col-span-2">
-            <label class="block text-xs font-semibold text-gray-300 mb-1">Cover Image URL (Auto-generates if empty)</label>
-            <input id="inputCover" type="url" placeholder="https://image.tmdb.org/..." class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded border border-lbBorder focus:outline-none focus:border-lbGreen" />
+          <div class="col-span-2">
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Cover Image URL (Optional)</label>
+            <input id="inputCover" type="url" placeholder="Auto-generates if blank" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen" />
           </div>
         </div>
 
-        <div class="flex items-center justify-between bg-[#14181c] p-3 rounded-lg border border-lbBorder">
+        <!-- Multi-Select Genre Tags -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1.5">Select Genres (Tap up to 3):</label>
+          <div id="formGenrePills" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <!-- Half-Star Rating Selector & Heart Like -->
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-[#14181c] p-3 rounded-lg border border-lbBorder">
           <div>
-            <label class="block text-xs font-semibold text-gray-300 mb-1">Your Rating (Max 5 Stars) *</label>
-            <div id="starSelector" class="flex items-center gap-1.5 text-2xl cursor-pointer"></div>
+            <div class="flex items-center gap-2 mb-1">
+              <label class="text-xs font-semibold text-gray-300">Rating:</label>
+              <span id="ratingValueLabel" class="text-xs font-black text-lbGreen">5.0 ★</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div id="starSelector" class="flex items-center gap-1 text-2xl cursor-pointer"></div>
+              <button
+                type="button"
+                onclick="adjustHalfStar()"
+                class="text-[11px] bg-lbCard hover:bg-lbBorder text-gray-300 px-2 py-1 rounded border border-lbBorder font-semibold"
+                title="Toggle .5 half star"
+              >
+                +½ ★
+              </button>
+            </div>
           </div>
-          <div class="text-center">
-            <label class="block text-xs font-semibold text-gray-300 mb-1">Liked?</label>
-            <button type="button" id="likeToggleBtn" onclick="toggleHeartLike()" class="text-2xl text-gray-500 hover:scale-110 transition">
-              <i class="fa-solid fa-heart"></i>
-            </button>
+
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-1.5 cursor-pointer text-xs text-gray-300 select-none">
+              <input id="inputSpoiler" type="checkbox" class="accent-lbOrange w-3.5 h-3.5 rounded" />
+              <span>Spoiler?</span>
+            </label>
+            <div class="text-center">
+              <button type="button" id="likeToggleBtn" onclick="toggleHeartLike()" class="text-2xl text-lbOrange hover:scale-110 transition">
+                <i class="fa-solid fa-heart"></i>
+              </button>
+            </div>
           </div>
         </div>
 
+        <!-- Review Text -->
         <div>
           <label class="block text-xs font-semibold text-gray-300 mb-1">Your Review *</label>
           <textarea
             id="inputReview"
             rows="3"
             required
-            placeholder="Write what you thought about this movie or series..."
-            class="w-full bg-[#14181c] text-white text-sm p-3 rounded border border-lbBorder focus:outline-none focus:border-lbGreen"
+            placeholder="What stood out? Direction, music, climax..."
+            class="w-full bg-[#14181c] text-white text-sm p-3 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen"
           ></textarea>
         </div>
 
-        <div class="flex items-center justify-between pt-2">
+        <div class="flex items-center justify-between pt-1">
           <div>
             <span class="text-xs text-gray-400">Posting as: <strong id="postingAsLabel" class="text-white">Guest</strong></span>
-            <span id="postingExpiryNotice" class="block text-[11px] text-amber-400">Guest reviews expire after 30 days</span>
+            <span id="postingExpiryNotice" class="block text-[10px] text-amber-400">Guest reviews expire after 30 days</span>
           </div>
           <div class="flex gap-2">
-            <button type="button" onclick="closeLogModal()" class="px-4 py-2 rounded text-xs font-semibold text-gray-300 hover:bg-lbBorder">Cancel</button>
-            <button type="submit" class="bg-lbGreen hover:bg-[#00c448] text-black font-bold text-xs px-5 py-2 rounded shadow">Save Entry</button>
+            <button type="button" onclick="closeLogModal()" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-300 hover:bg-lbBorder">Cancel</button>
+            <button type="submit" id="submitReviewBtn" class="bg-lbGreen hover:bg-[#00c448] text-black font-bold text-xs px-5 py-2 rounded-lg shadow">Save Entry</button>
           </div>
         </div>
       </form>
@@ -308,34 +456,32 @@
   </div>
 
   <!-- AUTHENTICATION & ACCOUNT MODAL -->
-  <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-lbCard border border-lbBorder rounded-xl max-w-md w-full p-6 shadow-2xl">
+  <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-lbCard border-t sm:border border-lbBorder rounded-t-2xl sm:rounded-xl max-w-md w-full p-5 sm:p-6 shadow-2xl">
       <div class="flex items-center justify-between border-b border-lbBorder pb-3 mb-4">
         <h2 class="text-white font-bold text-base flex items-center gap-2">
           <i class="fa-solid fa-user-shield text-lbGreen"></i>
           <span>User Account & Authentication</span>
         </h2>
-        <button onclick="closeProfileModal()" class="text-gray-400 hover:text-white">
-          <i class="fa-solid fa-xmark"></i>
+        <button onclick="closeProfileModal()" class="text-gray-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
-      <!-- Current Account Status Card -->
       <div class="bg-[#14181c] border border-lbBorder rounded-lg p-4 mb-4">
         <div class="flex items-center gap-3">
           <img id="modalUserPhoto" src="" alt="" class="w-11 h-11 rounded-full object-cover hidden" />
           <span id="modalUserAvatar" class="w-11 h-11 rounded-full flex items-center justify-center text-base font-bold text-white bg-emerald-600">G</span>
-          <div class="flex-1">
-            <div class="flex items-center gap-2">
-              <h3 id="modalUserName" class="text-white font-bold text-sm">Guest</h3>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 id="modalUserName" class="text-white font-bold text-sm truncate">Guest</h3>
               <span id="modalAccountTypePill" class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/40">30-Day Guest</span>
             </div>
-            <p id="modalUserEmailOrExpiry" class="text-xs text-gray-400 mt-0.5">Temporary anonymous account</p>
+            <p id="modalUserEmailOrExpiry" class="text-xs text-gray-400 mt-0.5 truncate">Temporary anonymous account</p>
           </div>
         </div>
       </div>
 
-      <!-- Google Sign-In Section -->
       <div id="googleSignInSection" class="mb-5">
         <button
           type="button"
@@ -343,46 +489,42 @@
           class="w-full bg-white hover:bg-gray-100 text-gray-900 font-bold text-sm py-2.5 px-4 rounded-lg flex items-center justify-center gap-2.5 shadow transition"
         >
           <i class="fa-brands fa-google text-red-500 text-base"></i>
-          <span>Sign in with Google (Permanent Account)</span>
+          <span>Sign in with Google (Permanent)</span>
         </button>
-        <p class="text-[11px] text-gray-400 text-center mt-2">
-          Signing in with Google saves your reviews permanently and links your Google profile picture.
-        </p>
       </div>
 
-      <!-- Google Sign-Out Section (Hidden when Guest) -->
       <div id="googleSignOutSection" class="hidden mb-5">
         <button
           type="button"
           onclick="signOutToGuest()"
-          class="w-full bg-red-950/60 hover:bg-red-900/70 text-red-200 border border-red-500/40 font-semibold text-xs py-2 px-4 rounded-lg transition"
+          class="w-full bg-red-950/60 hover:bg-red-900/70 text-red-200 border border-red-500/40 font-semibold text-xs py-2.5 px-4 rounded-lg transition"
         >
           <i class="fa-solid fa-right-from-bracket mr-1.5"></i>Sign Out (Switch to 30-Day Guest Mode)
         </button>
       </div>
 
-      <!-- Customize Display Nickname (For Guest or Custom Display Name) -->
       <form onsubmit="saveCustomNickname(event)" class="border-t border-lbBorder pt-4">
-        <label class="block text-xs font-semibold text-gray-300 mb-1.5">
-          Set / Update Display Nickname:
-        </label>
+        <label class="block text-xs font-semibold text-gray-300 mb-1.5">Set / Update Display Nickname:</label>
         <div class="flex gap-2">
           <input
             id="customUserNameInput"
             type="text"
             required
             placeholder="e.g. Vysakh, Arjun, Meera..."
-            class="flex-1 bg-[#14181c] text-white text-sm px-3 py-2 rounded border border-lbBorder focus:outline-none focus:border-lbGreen"
+            class="flex-1 bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen"
           />
-          <button type="submit" class="bg-lbGreen text-black font-bold text-xs px-4 py-2 rounded">
-            Update Name
+          <button type="submit" class="bg-lbGreen text-black font-bold text-xs px-4 py-2 rounded-lg">
+            Save
           </button>
         </div>
-        <p class="text-[11px] text-gray-500 mt-2">
-          Note: Anonymous guest accounts and their reviews automatically expire 30 days after creation.
-        </p>
       </form>
     </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toastBanner" class="fixed bottom-16 sm:bottom-5 right-4 z-50 hidden bg-lbCard border border-lbGreen text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow-xl items-center gap-2">
+    <i class="fa-solid fa-circle-check text-lbGreen"></i>
+    <span id="toastText">Saved!</span>
   </div>
 
   <!-- FIREBASE & APPLICATION LOGIC -->
@@ -402,6 +544,7 @@
       getFirestore,
       collection,
       addDoc,
+      updateDoc,
       deleteDoc,
       doc,
       onSnapshot
@@ -418,6 +561,10 @@
     };
 
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+    const ALL_GENRES = [
+      "Sci-Fi", "Thriller", "Drama", "Action", "Comedy",
+      "Crime", "Mystery", "Romance", "Horror", "Anime", "Fantasy"
+    ];
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -429,7 +576,12 @@
     let allReviews = [];
     let selectedRating = 5;
     let isHeartLiked = true;
+    let selectedFormGenres = ["Drama"];
+    let editingReviewId = null;
+
     let activeMediaFilter = "ALL";
+    let activeGenreFilter = "ALL";
+    let activeLanguageFilter = "ALL";
     let activeUserFilter = "ALL";
     let currentlyOpenShowKey = null;
     let useLocalStorageFallback = false;
@@ -449,24 +601,47 @@
         title: "Interstellar",
         type: "Movie",
         year: "2014",
+        language: "English",
+        genres: ["Sci-Fi", "Drama"],
         coverUrl: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
         rating: 5,
         liked: true,
+        spoiler: false,
         reviewText: "The docking scene paired with Hans Zimmer's 'No Time for Caution' organ score is pure cinema history.",
         userName: "Vysakh",
         userColor: "#059669",
         isAnonymous: false,
         expiresAt: null,
-        createdAt: Date.now() - 3600000 * 24
+        createdAt: Date.now() - 3600000 * 36
+      },
+      {
+        title: "Kumbalangi Nights",
+        type: "Movie",
+        year: "2019",
+        language: "Malayalam",
+        genres: ["Drama", "Romance"],
+        coverUrl: "https://image.tmdb.org/t/p/w500/zM26ba17c2vR24PjK3eF72mR2H1.jpg",
+        rating: 4.5,
+        liked: true,
+        spoiler: false,
+        reviewText: "Every frame in Kumbalangi feels alive. Fahadh Faasil as Shammi is unforgettable.",
+        userName: "Arjun",
+        userColor: "#2563eb",
+        isAnonymous: false,
+        expiresAt: null,
+        createdAt: Date.now() - 3600000 * 18
       },
       {
         title: "Severance",
         type: "Series",
         year: "2022",
+        language: "English",
+        genres: ["Sci-Fi", "Thriller", "Mystery"],
         coverUrl: "https://image.tmdb.org/t/p/w500/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
         rating: 5,
         liked: true,
-        reviewText: "That season finale cliffhanger had my heart racing for 40 straight minutes. Best sci-fi thriller series out right now.",
+        spoiler: true,
+        reviewText: "That season finale cliffhanger when Mark shouts 'She's alive!' had my heart racing for 40 straight minutes.",
         userName: "Meera",
         userColor: "#db2777",
         isAnonymous: false,
@@ -474,6 +649,17 @@
         createdAt: Date.now() - 3600000 * 5
       }
     ];
+
+    function showToast(msg) {
+      const toast = document.getElementById("toastBanner");
+      document.getElementById("toastText").textContent = msg;
+      toast.classList.remove("hidden");
+      toast.classList.add("flex");
+      setTimeout(() => {
+        toast.classList.add("hidden");
+        toast.classList.remove("flex");
+      }, 2600);
+    }
 
     function pickColorForName(name) {
       const palette = ["#059669", "#2563eb", "#db2777", "#d97706", "#7c3aed", "#0891b2"];
@@ -483,13 +669,11 @@
       return palette[sum % palette.length];
     }
 
-    // CHECK & EXPIRE 30-DAY ANONYMOUS ACCOUNTS
     async function handleAuthUser(user) {
       if (!user) {
         try {
           await signInAnonymously(auth);
         } catch (err) {
-          console.warn("Anonymous sign-in fallback:", err.message);
           updateUserBadgeUI();
         }
         return;
@@ -500,16 +684,13 @@
         : Date.now();
       const expiresAtMs = createdTimeMs + THIRTY_DAYS_MS;
 
-      // If anonymous account is older than 30 days, delete & issue fresh session
       if (user.isAnonymous && Date.now() > expiresAtMs) {
         try {
           localStorage.removeItem("cineboxd_guest_nickname");
           await deleteUser(user);
           await signInAnonymously(auth);
           return;
-        } catch (e) {
-          console.warn("Could not auto-delete expired anonymous user:", e);
-        }
+        } catch (e) {}
       }
 
       if (user.isAnonymous) {
@@ -538,36 +719,33 @@
       }
 
       updateUserBadgeUI();
+      if (currentlyOpenShowKey) refreshOpenDetailsModal();
     }
 
-    // GOOGLE SIGN-IN (UPGRADES GUEST OR SIGNS IN DIRECTLY)
     window.signInWithGoogleAccount = async function () {
       try {
         if (auth.currentUser && auth.currentUser.isAnonymous) {
           try {
-            // Try upgrading anonymous account so their guest reviews become permanent
             const linked = await linkWithPopup(auth.currentUser, googleProvider);
             await handleAuthUser(linked.user);
             closeProfileModal();
+            showToast(`Signed in as ${linked.user.displayName || "Google User"}`);
             return;
           } catch (linkErr) {
-            // If Google account already exists in Firebase, sign in normally
             const result = await signInWithPopup(auth, googleProvider);
             await handleAuthUser(result.user);
             closeProfileModal();
+            showToast(`Signed in as ${result.user.displayName || "Google User"}`);
             return;
           }
         } else {
           const result = await signInWithPopup(auth, googleProvider);
           await handleAuthUser(result.user);
           closeProfileModal();
+          showToast("Signed in with Google!");
         }
       } catch (err) {
-        alert(
-          "Google Sign-In failed: " +
-            err.message +
-            "\n\nMake sure Google is enabled in Firebase Console -> Authentication -> Sign-in method, and your GitHub domain is in Authorized Domains."
-        );
+        alert("Google Sign-In failed: " + err.message);
       }
     };
 
@@ -576,9 +754,8 @@
         await signOut(auth);
         await signInAnonymously(auth);
         closeProfileModal();
-      } catch (err) {
-        console.error("Sign out error:", err);
-      }
+        showToast("Switched to 30-Day Guest Mode");
+      } catch (err) {}
     };
 
     window.saveCustomNickname = function (e) {
@@ -595,13 +772,15 @@
       currentUser.name = name;
       currentUser.color = pickColorForName(name);
       updateUserBadgeUI();
-      document.getElementById("customUserNameInput").value = "";
       closeProfileModal();
+      showToast(`Name updated to ${name}`);
     };
 
-    // INITIALIZE AUTH & REALTIME FIRESTORE SYNC
     function initCloudSync() {
+      renderGenreFilterBar();
+      renderFormGenrePills();
       renderStarSelector();
+
       onAuthStateChanged(auth, (user) => {
         handleAuthUser(user);
       });
@@ -612,14 +791,13 @@
           useLocalStorageFallback = false;
           const statusEl = document.getElementById("syncStatus");
           statusEl.textContent = "Live Cloud Sync";
-          statusEl.className = "text-[11px] px-2 py-0.5 rounded-full bg-emerald-950 text-lbGreen border border-lbGreen/40";
+          statusEl.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-lbGreen border border-lbGreen/40 hidden md:inline-block";
 
           const now = Date.now();
           const validDocs = [];
 
           snapshot.docs.forEach((d) => {
             const data = d.data();
-            // Auto-delete anonymous reviews past their 30-day expiration
             if (data.isAnonymous && data.expiresAt && now > data.expiresAt) {
               deleteDoc(doc(db, "cineboxd_reviews", d.id)).catch(() => {});
             } else {
@@ -628,21 +806,20 @@
           });
 
           allReviews = validDocs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-          updateUserFilterDropdown();
+          updateFilterDropdowns();
           renderApp();
           if (currentlyOpenShowKey) refreshOpenDetailsModal();
         },
         (error) => {
-          console.warn("Firestore fallback:", error.message);
           useLocalStorageFallback = true;
           const statusEl = document.getElementById("syncStatus");
           statusEl.textContent = "Local Mode";
-          statusEl.className = "text-[11px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-500/40";
+          statusEl.className = "text-[10px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-500/40 hidden md:inline-block";
 
           const now = Date.now();
           const raw = JSON.parse(localStorage.getItem("cineboxd_fallback_reviews") || "[]");
           allReviews = raw.filter((r) => !(r.isAnonymous && r.expiresAt && now > r.expiresAt));
-          updateUserFilterDropdown();
+          updateFilterDropdowns();
           renderApp();
         }
       );
@@ -650,7 +827,7 @@
 
     function saveFallbackLocal() {
       localStorage.setItem("cineboxd_fallback_reviews", JSON.stringify(allReviews));
-      updateUserFilterDropdown();
+      updateFilterDropdowns();
       renderApp();
       if (currentlyOpenShowKey) refreshOpenDetailsModal();
     }
@@ -662,12 +839,12 @@
     }
 
     function updateUserBadgeUI() {
-      const nameEl = document.getElementById("currentUserName");
+      document.getElementById("currentUserName").textContent = currentUser.name;
+      document.getElementById("mobileNavUserLabel").textContent = currentUser.name;
+
       const badgeEl = document.getElementById("currentAccountBadge");
       const avatarEl = document.getElementById("currentUserAvatar");
       const photoEl = document.getElementById("currentUserPhoto");
-
-      nameEl.textContent = currentUser.name;
 
       if (currentUser.photoURL) {
         photoEl.src = currentUser.photoURL;
@@ -682,13 +859,77 @@
 
       if (currentUser.isAnonymous) {
         const days = getDaysRemaining(currentUser.expiresAt);
-        badgeEl.textContent = `Guest (${days}d left)`;
+        badgeEl.textContent = `Guest (${days}d)`;
         badgeEl.className = "text-[10px] text-amber-400 block";
       } else {
-        badgeEl.textContent = "Google Verified";
+        badgeEl.textContent = "Verified";
         badgeEl.className = "text-[10px] text-lbGreen block";
       }
     }
+
+    // GENRE FILTER BAR & FORM PILLS
+    function renderGenreFilterBar() {
+      const bar = document.getElementById("genreFilterBar");
+      const items = ["ALL", ...ALL_GENRES];
+      bar.innerHTML = items
+        .map((g) => {
+          const active = activeGenreFilter === g;
+          const label = g === "ALL" ? "All Genres" : g;
+          return `
+            <button
+              onclick="setGenreFilter('${g}')"
+              class="px-2.5 py-1 rounded-full text-[11px] font-semibold transition shrink-0 ${
+                active
+                  ? "bg-lbBlue text-black font-bold"
+                  : "bg-[#1f262d] text-gray-400 hover:text-white border border-lbBorder"
+              }"
+            >
+              ${label}
+            </button>
+          `;
+        })
+        .join("");
+    }
+
+    window.setGenreFilter = function (genre) {
+      activeGenreFilter = genre;
+      renderGenreFilterBar();
+      renderApp();
+    };
+
+    function renderFormGenrePills() {
+      const container = document.getElementById("formGenrePills");
+      container.innerHTML = ALL_GENRES.map((g) => {
+        const selected = selectedFormGenres.includes(g);
+        return `
+          <button
+            type="button"
+            onclick="toggleFormGenre('${g}')"
+            class="px-2.5 py-1 rounded-full text-xs font-semibold border transition ${
+              selected
+                ? "bg-lbGreen/20 border-lbGreen text-lbGreen"
+                : "bg-[#14181c] border-lbBorder text-gray-400 hover:text-white"
+            }"
+          >
+            ${selected ? '<i class="fa-solid fa-check mr-1 text-[10px]"></i>' : ""}${g}
+          </button>
+        `;
+      }).join("");
+    }
+
+    window.toggleFormGenre = function (genre) {
+      if (selectedFormGenres.includes(genre)) {
+        if (selectedFormGenres.length > 1) {
+          selectedFormGenres = selectedFormGenres.filter((item) => item !== genre);
+        }
+      } else {
+        if (selectedFormGenres.length >= 3) {
+          selectedFormGenres.shift();
+        }
+        selectedFormGenres.push(genre);
+      }
+      renderFormGenrePills();
+    };
 
     // GROUP REVIEWS BY SHOW TITLE
     function getGroupedShows() {
@@ -702,12 +943,24 @@
             title: rev.title.trim(),
             type: rev.type || "Movie",
             year: rev.year || "",
+            language: rev.language || "English",
+            genres: Array.isArray(rev.genres) && rev.genres.length ? rev.genres : ["Drama"],
             coverUrl: rev.coverUrl || "",
+            latestCreatedAt: rev.createdAt || 0,
             reviews: []
           });
         }
         const group = map.get(key);
         if (!group.coverUrl && rev.coverUrl) group.coverUrl = rev.coverUrl;
+        if (!group.language && rev.language) group.language = rev.language;
+        if (Array.isArray(rev.genres)) {
+          rev.genres.forEach((g) => {
+            if (!group.genres.includes(g)) group.genres.push(g);
+          });
+        }
+        if ((rev.createdAt || 0) > group.latestCreatedAt) {
+          group.latestCreatedAt = rev.createdAt;
+        }
         group.reviews.push(rev);
       }
       return Array.from(map.values());
@@ -718,34 +971,57 @@
       return `https://placehold.co/400x600/1f262d/00e054?text=${encoded}`;
     }
 
+    // HALF-STAR RENDERER
     function renderStarsHTML(rating) {
-      const full = Math.round(Number(rating) || 0);
+      const val = Math.round((Number(rating) || 0) * 2) / 2;
       let html = "";
       for (let i = 1; i <= 5; i++) {
-        html += i <= full
-          ? '<i class="fa-solid fa-star text-lbGreen"></i>'
-          : '<i class="fa-regular fa-star text-gray-600"></i>';
+        if (val >= i) {
+          html += '<i class="fa-solid fa-star text-lbGreen"></i>';
+        } else if (val >= i - 0.5) {
+          html += '<i class="fa-solid fa-star-half-stroke text-lbGreen"></i>';
+        } else {
+          html += '<i class="fa-regular fa-star text-gray-600"></i>';
+        }
       }
       return html;
     }
 
     window.renderApp = function () {
       const searchVal = (document.getElementById("searchInput").value || "").toLowerCase().trim();
+      const sortMode = document.getElementById("sortSelect").value;
       const shows = getGroupedShows();
+
+      // Update Quick Stats
+      document.getElementById("statShowsCount").textContent = shows.length;
+      document.getElementById("statReviewsCount").textContent = allReviews.length;
 
       const filtered = shows.filter((show) => {
         if (activeMediaFilter !== "ALL" && show.type !== activeMediaFilter) return false;
+        if (activeLanguageFilter !== "ALL" && (show.language || "English") !== activeLanguageFilter) return false;
+        if (activeGenreFilter !== "ALL" && !(show.genres || []).includes(activeGenreFilter)) return false;
         if (activeUserFilter !== "ALL") {
           const hasUser = show.reviews.some((r) => r.userName === activeUserFilter);
           if (!hasUser) return false;
         }
         if (searchVal) {
           const matchTitle = show.title.toLowerCase().includes(searchVal);
+          const matchLang = (show.language || "").toLowerCase().includes(searchVal);
+          const matchGenre = (show.genres || []).some((g) => g.toLowerCase().includes(searchVal));
           const matchUser = show.reviews.some((r) => (r.userName || "").toLowerCase().includes(searchVal));
-          const matchText = show.reviews.some((r) => (r.reviewText || "").toLowerCase().includes(searchVal));
-          return matchTitle || matchUser || matchText;
+          return matchTitle || matchLang || matchGenre || matchUser;
         }
         return true;
+      });
+
+      // Sort
+      filtered.sort((a, b) => {
+        const avgA = a.reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / a.reviews.length;
+        const avgB = b.reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / b.reviews.length;
+        if (sortMode === "RATING_DESC") return avgB - avgA;
+        if (sortMode === "MOST_REVIEWED") return b.reviews.length - a.reviews.length;
+        if (sortMode === "YEAR_DESC") return (Number(b.year) || 0) - (Number(a.year) || 0);
+        return b.latestCreatedAt - a.latestCreatedAt;
       });
 
       const grid = document.getElementById("posterGrid");
@@ -773,42 +1049,63 @@
             }
           }
 
+          const topGenres = (show.genres || []).slice(0, 2);
+
           return `
-            <div class="poster-card cursor-pointer group" onclick="openShowDetails('${show.key.replace(/'/g, "\\'")}')">
-              <div class="aspect-[2/3] rounded-lg overflow-hidden poster-border relative bg-[#1f262d] shadow-md">
+            <div class="poster-card cursor-pointer group flex flex-col" onclick="openShowDetails('${show.key.replace(/'/g, "\\'")}')">
+              <div class="aspect-[2/3] rounded-xl overflow-hidden poster-border relative bg-[#1f262d] shadow-md">
                 <img
                   src="${cover}"
                   alt="${show.title}"
+                  loading="lazy"
                   onerror="this.src='${getFallbackPoster(show.title)}'"
                   class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                 />
-                <span class="absolute top-2 left-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-black/75 text-white backdrop-blur-sm">
-                  ${show.type}
-                </span>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition flex flex-col justify-end p-3">
-                  <span class="text-white text-xs font-bold flex items-center gap-1">
-                    <i class="fa-regular fa-comment-dots text-lbGreen"></i>
-                    Read ${show.reviews.length} ${show.reviews.length === 1 ? "Review" : "Reviews"}
+                <!-- Top Badges: Type & Language -->
+                <div class="absolute top-2 inset-x-2 flex items-center justify-between gap-1 pointer-events-none">
+                  <span class="text-[9px] sm:text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-black/80 text-white backdrop-blur-sm">
+                    ${show.type}
+                  </span>
+                  <span class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-950/90 text-lbGreen border border-lbGreen/30 backdrop-blur-sm">
+                    ${show.language || "English"}
+                  </span>
+                </div>
+
+                <!-- Bottom Gradient Bar with Review Count -->
+                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2.5 flex items-end justify-between">
+                  <div class="flex flex-wrap gap-1">
+                    ${topGenres
+                      .map(
+                        (g) =>
+                          `<span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white/15 text-gray-100 backdrop-blur-sm">${g}</span>`
+                      )
+                      .join("")}
+                  </div>
+                  <span class="text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0">
+                    <i class="fa-regular fa-comment text-lbGreen"></i>${show.reviews.length}
                   </span>
                 </div>
               </div>
 
-              <div class="mt-2">
-                <h3 class="text-white font-bold text-sm truncate" title="${show.title}">${show.title}</h3>
+              <div class="mt-2 px-0.5">
+                <h3 class="text-white font-bold text-xs sm:text-sm truncate" title="${show.title}">${show.title}</h3>
                 <div class="flex items-center justify-between mt-1">
-                  <div class="flex items-center gap-0.5 text-xs">
-                    ${renderStarsHTML(avgRating)}
+                  <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-0.5 text-[11px] sm:text-xs">
+                      ${renderStarsHTML(avgRating)}
+                    </div>
+                    <span class="text-[10px] text-gray-400 font-semibold">${avgRating.toFixed(1)}</span>
                   </div>
                   <div class="flex -space-x-1.5">
                     ${uniqueReviewers
-                      .slice(0, 4)
+                      .slice(0, 3)
                       .map((u) =>
                         u.userPhoto
-                          ? `<img src="${u.userPhoto}" title="Reviewed by ${u.userName}" class="w-5 h-5 rounded-full object-cover ring-2 ring-[#14181c]" />`
+                          ? `<img src="${u.userPhoto}" title="${u.userName}" class="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover ring-2 ring-[#14181c]" />`
                           : `<span
-                              title="Reviewed by ${u.userName}"
+                              title="${u.userName}"
                               style="background-color: ${u.userColor || "#059669"}"
-                              class="w-5 h-5 rounded-full text-[10px] font-bold text-white flex items-center justify-center ring-2 ring-[#14181c]"
+                              class="w-4 h-4 sm:w-5 sm:h-5 rounded-full text-[9px] font-bold text-white flex items-center justify-center ring-2 ring-[#14181c]"
                             >
                               ${(u.userName || "U")[0].toUpperCase()}
                             </span>`
@@ -843,9 +1140,23 @@
       const cover = show.coverUrl || getFallbackPoster(show.title);
 
       document.getElementById("detailCover").src = cover;
+      // Desktop & Mobile header sync
       document.getElementById("detailTypeBadge").textContent = show.type;
+      document.getElementById("detailTypeBadgeMobile").textContent = show.type;
+      document.getElementById("detailLangBadge").textContent = show.language || "English";
+      document.getElementById("detailLangBadgeMobile").textContent = show.language || "English";
       document.getElementById("detailYear").textContent = show.year || "";
+      document.getElementById("detailYearMobile").textContent = show.year || "";
       document.getElementById("detailTitle").textContent = show.title;
+      document.getElementById("detailTitleMobile").textContent = show.title;
+
+      document.getElementById("detailGenresRow").innerHTML = (show.genres || [])
+        .map(
+          (g) =>
+            `<span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#14181c] text-lbBlue border border-lbBorder">${g}</span>`
+        )
+        .join("");
+
       document.getElementById("detailAvgStars").innerHTML = renderStarsHTML(avg);
       document.getElementById("detailAvgNumber").textContent = `${avg.toFixed(1)} / 5`;
       document.getElementById("detailReviewCount").textContent = `${show.reviews.length} ${show.reviews.length === 1 ? "review" : "reviews"}`;
@@ -860,33 +1171,51 @@
         .map((r) => {
           const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "";
           const badge = r.isAnonymous
-            ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/30" title="Auto-deletes after 30 days">Guest (${getDaysRemaining(r.expiresAt)}d left)</span>`
+            ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/30">Guest (${getDaysRemaining(r.expiresAt)}d)</span>`
             : `<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-lbGreen border border-lbGreen/30"><i class="fa-brands fa-google mr-1 text-[9px]"></i>Verified</span>`;
 
           const avatarHTML = r.userPhoto
             ? `<img src="${r.userPhoto}" class="w-6 h-6 rounded-full object-cover" />`
             : `<span style="background-color: ${r.userColor || "#059669"}" class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white">${(r.userName || "U")[0].toUpperCase()}</span>`;
 
+          const isOwner = r.userId && r.userId === currentUser.uid;
+          const ownerActionsHTML = isOwner
+            ? `<div class="flex items-center gap-2.5 ml-1">
+                 <button onclick="openEditReview('${r.id}')" class="text-gray-400 hover:text-lbBlue text-xs" title="Edit your review">
+                   <i class="fa-solid fa-pen"></i>
+                 </button>
+                 <button onclick="deleteReviewEntry('${r.id}')" class="text-gray-400 hover:text-red-400 text-xs" title="Delete your review">
+                   <i class="fa-regular fa-trash-can"></i>
+                 </button>
+               </div>`
+            : "";
+
+          const spoilerWarning = r.spoiler
+            ? `<button onclick="this.nextElementSibling.classList.toggle('revealed'); this.remove();" class="mb-1.5 text-[10px] font-bold bg-amber-950/90 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded flex items-center gap-1">
+                 <i class="fa-solid fa-eye-slash"></i> Contains Spoilers — Tap to Reveal
+               </button>`
+            : "";
+
           return `
             <div class="bg-[#14181c] border border-lbBorder rounded-lg p-3.5">
               <div class="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
-                <div class="flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-1.5 flex-wrap">
                   ${avatarHTML}
                   <span class="text-white font-bold text-xs">${r.userName}</span>
                   ${badge}
                   <div class="text-xs flex items-center gap-0.5 ml-1">
                     ${renderStarsHTML(r.rating)}
                   </div>
-                  ${r.liked ? '<i class="fa-solid fa-heart text-lbOrange text-xs ml-1" title="Liked"></i>' : ""}
+                  <span class="text-[11px] font-bold text-lbGreen">${Number(r.rating).toFixed(1)}</span>
+                  ${r.liked ? '<i class="fa-solid fa-heart text-lbOrange text-xs ml-0.5" title="Liked"></i>' : ""}
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="text-[11px] text-gray-500">${dateStr}</span>
-                  <button onclick="deleteReviewEntry('${r.id}')" class="text-gray-500 hover:text-red-400 text-xs" title="Delete review">
-                    <i class="fa-regular fa-trash-can"></i>
-                  </button>
+                  <span class="text-[10px] text-gray-500">${dateStr}</span>
+                  ${ownerActionsHTML}
                 </div>
               </div>
-              <p class="text-gray-200 text-sm leading-relaxed whitespace-pre-line">${r.reviewText}</p>
+              ${spoilerWarning}
+              <p class="text-gray-200 text-xs sm:text-sm leading-relaxed whitespace-pre-line ${r.spoiler ? "spoiler-blur" : ""}">${r.reviewText}</p>
             </div>
           `;
         })
@@ -900,27 +1229,54 @@
       modal.classList.remove("flex");
     };
 
-    window.openLogModal = function (prefillShow = null) {
+    // OPEN LOG MODAL (NEW OR EDIT)
+    window.openLogModal = function (prefillShow = null, reviewToEdit = null) {
+      editingReviewId = reviewToEdit ? reviewToEdit.id : null;
+      document.getElementById("logModalHeading").innerHTML = reviewToEdit
+        ? '<i class="fa-solid fa-pen text-lbBlue"></i><span>Edit Your Review</span>'
+        : '<i class="fa-solid fa-clapperboard text-lbGreen"></i><span>Log Completed Movie or Series</span>';
+      document.getElementById("submitReviewBtn").textContent = reviewToEdit ? "Update Review" : "Save Entry";
+
       document.getElementById("postingAsLabel").textContent = currentUser.name;
       const expiryNotice = document.getElementById("postingExpiryNotice");
       if (currentUser.isAnonymous) {
-        expiryNotice.textContent = `Posting as Guest — expires in ${getDaysRemaining(currentUser.expiresAt)} days (Sign in with Google for permanent reviews)`;
-        expiryNotice.className = "block text-[11px] text-amber-400";
+        expiryNotice.textContent = `Guest session — expires in ${getDaysRemaining(currentUser.expiresAt)}d`;
+        expiryNotice.className = "block text-[10px] text-amber-400";
       } else {
         expiryNotice.textContent = "Google Verified — permanent review";
-        expiryNotice.className = "block text-[11px] text-lbGreen";
+        expiryNotice.className = "block text-[10px] text-lbGreen";
       }
 
-      if (prefillShow) {
+      if (reviewToEdit) {
+        document.getElementById("inputTitle").value = reviewToEdit.title || "";
+        document.getElementById("inputType").value = reviewToEdit.type || "Movie";
+        document.getElementById("inputLanguage").value = reviewToEdit.language || "English";
+        document.getElementById("inputYear").value = reviewToEdit.year || "";
+        document.getElementById("inputCover").value = reviewToEdit.coverUrl || "";
+        document.getElementById("inputReview").value = reviewToEdit.reviewText || "";
+        document.getElementById("inputSpoiler").checked = Boolean(reviewToEdit.spoiler);
+        selectedRating = Number(reviewToEdit.rating) || 5;
+        isHeartLiked = Boolean(reviewToEdit.liked);
+        selectedFormGenres = Array.isArray(reviewToEdit.genres) && reviewToEdit.genres.length ? [...reviewToEdit.genres] : ["Drama"];
+      } else if (prefillShow) {
         document.getElementById("inputTitle").value = prefillShow.title;
         document.getElementById("inputType").value = prefillShow.type || "Movie";
+        document.getElementById("inputLanguage").value = prefillShow.language || "English";
         document.getElementById("inputYear").value = prefillShow.year || "";
         document.getElementById("inputCover").value = prefillShow.coverUrl || "";
+        document.getElementById("inputReview").value = "";
+        document.getElementById("inputSpoiler").checked = false;
+        selectedRating = 5;
+        isHeartLiked = true;
+        selectedFormGenres = Array.isArray(prefillShow.genres) && prefillShow.genres.length ? [...prefillShow.genres] : ["Drama"];
       } else {
         document.getElementById("logForm").reset();
+        selectedRating = 5;
+        isHeartLiked = true;
+        selectedFormGenres = ["Drama"];
       }
-      selectedRating = 5;
-      isHeartLiked = true;
+
+      renderFormGenrePills();
       renderStarSelector();
       updateHeartUI();
 
@@ -929,27 +1285,44 @@
       modal.classList.add("flex");
     };
 
+    window.openEditReview = function (reviewId) {
+      const target = allReviews.find((r) => r.id === reviewId);
+      if (!target) return;
+      closeDetailsModal();
+      openLogModal(null, target);
+    };
+
     window.closeLogModal = function () {
+      editingReviewId = null;
       const modal = document.getElementById("logModal");
       modal.classList.add("hidden");
       modal.classList.remove("flex");
     };
 
-    window.fillPreset = function (title, type, year, cover) {
+    window.fillPreset = function (title, type, year, language, genres, cover) {
       document.getElementById("inputTitle").value = title;
       document.getElementById("inputType").value = type;
       document.getElementById("inputYear").value = year;
+      document.getElementById("inputLanguage").value = language;
       document.getElementById("inputCover").value = cover;
+      selectedFormGenres = genres;
+      renderFormGenrePills();
     };
 
     function renderStarSelector() {
       const container = document.getElementById("starSelector");
+      document.getElementById("ratingValueLabel").textContent = `${selectedRating.toFixed(1)} ★`;
       let html = "";
       for (let i = 1; i <= 5; i++) {
-        const active = i <= selectedRating;
+        let iconClass = "fa-regular fa-star text-gray-600";
+        if (selectedRating >= i) {
+          iconClass = "fa-solid fa-star text-lbGreen";
+        } else if (selectedRating >= i - 0.5) {
+          iconClass = "fa-solid fa-star-half-stroke text-lbGreen";
+        }
         html += `
-          <button type="button" onclick="setFormStar(${i})" class="focus:outline-none transition transform hover:scale-110">
-            <i class="${active ? "fa-solid text-lbGreen" : "fa-regular text-gray-500"} fa-star"></i>
+          <button type="button" onclick="setFormStar(${i})" class="focus:outline-none transition transform active:scale-125">
+            <i class="${iconClass}"></i>
           </button>
         `;
       }
@@ -957,7 +1330,20 @@
     }
 
     window.setFormStar = function (val) {
-      selectedRating = val;
+      if (selectedRating === val) {
+        selectedRating = Math.max(0.5, val - 0.5);
+      } else {
+        selectedRating = val;
+      }
+      renderStarSelector();
+    };
+
+    window.adjustHalfStar = function () {
+      if (selectedRating % 1 === 0 && selectedRating > 0.5) {
+        selectedRating -= 0.5;
+      } else if (selectedRating % 1 !== 0 && selectedRating + 0.5 <= 5) {
+        selectedRating += 0.5;
+      }
       renderStarSelector();
     };
 
@@ -977,39 +1363,55 @@
       e.preventDefault();
       const title = document.getElementById("inputTitle").value.trim();
       const type = document.getElementById("inputType").value;
+      const language = document.getElementById("inputLanguage").value;
       const year = document.getElementById("inputYear").value.trim();
       const coverUrl = document.getElementById("inputCover").value.trim() || getFallbackPoster(title);
       const reviewText = document.getElementById("inputReview").value.trim();
+      const spoiler = document.getElementById("inputSpoiler").checked;
 
       if (!title || !reviewText) return;
 
       const now = Date.now();
-      const entry = {
+      const payload = {
         title,
         type,
+        language,
+        genres: selectedFormGenres.length ? selectedFormGenres : ["Drama"],
         year,
         coverUrl,
         rating: selectedRating,
         liked: isHeartLiked,
+        spoiler,
         reviewText,
         userId: currentUser.uid,
         userName: currentUser.name,
         userPhoto: currentUser.photoURL || "",
         userColor: currentUser.color,
         isAnonymous: currentUser.isAnonymous,
-        expiresAt: currentUser.isAnonymous ? now + THIRTY_DAYS_MS : null,
-        createdAt: now
+        expiresAt: currentUser.isAnonymous ? now + THIRTY_DAYS_MS : null
       };
 
+      const targetEditId = editingReviewId;
       closeLogModal();
 
       if (useLocalStorageFallback) {
-        entry.id = "local_" + now;
-        allReviews.unshift(entry);
+        if (targetEditId) {
+          allReviews = allReviews.map((r) => (r.id === targetEditId ? { ...r, ...payload } : r));
+          showToast("Review updated!");
+        } else {
+          allReviews.unshift({ ...payload, id: "local_" + now, createdAt: now });
+          showToast("Show logged!");
+        }
         saveFallbackLocal();
       } else {
         try {
-          await addDoc(reviewsCollectionRef, entry);
+          if (targetEditId) {
+            await updateDoc(doc(db, "cineboxd_reviews", targetEditId), payload);
+            showToast("Review updated!");
+          } else {
+            await addDoc(reviewsCollectionRef, { ...payload, createdAt: now });
+            showToast("Show logged!");
+          }
         } catch (err) {
           alert("Could not save to Firestore. Check your Firebase Console Firestore Rules.");
         }
@@ -1020,11 +1422,13 @@
       if (useLocalStorageFallback) {
         allReviews = allReviews.filter((r) => r.id !== id);
         saveFallbackLocal();
+        showToast("Review deleted");
       } else {
         try {
           await deleteDoc(doc(db, "cineboxd_reviews", id));
+          showToast("Review deleted");
         } catch (err) {
-          console.error("Delete failed:", err);
+          alert("You can only delete your own reviews.");
         }
       }
     };
@@ -1032,12 +1436,25 @@
     window.seedSampleShows = async function () {
       if (useLocalStorageFallback) {
         for (const item of SEED_REVIEWS) {
-          allReviews.push({ ...item, id: "seed_" + Math.random().toString(36).slice(2) });
+          allReviews.push({
+            ...item,
+            userId: currentUser.uid,
+            id: "seed_" + Math.random().toString(36).slice(2)
+          });
         }
         saveFallbackLocal();
+        showToast("Sample shows loaded!");
       } else {
-        for (const item of SEED_REVIEWS) {
-          await addDoc(reviewsCollectionRef, item);
+        try {
+          for (const item of SEED_REVIEWS) {
+            await addDoc(reviewsCollectionRef, {
+              ...item,
+              userId: currentUser.uid
+            });
+          }
+          showToast("Sample shows loaded!");
+        } catch (err) {
+          console.error("Failed to seed sample shows:", err);
         }
       }
     };
@@ -1047,11 +1464,16 @@
       ["ALL", "Movie", "Series"].forEach((t) => {
         const btn = document.getElementById("filter-" + t);
         if (t === type) {
-          btn.className = "px-3 py-1 rounded text-xs font-bold bg-lbGreen text-black";
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-lbGreen text-black shrink-0";
         } else {
-          btn.className = "px-3 py-1 rounded text-xs font-semibold bg-lbCard text-gray-300 hover:text-white";
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-lbCard text-gray-300 hover:text-white shrink-0";
         }
       });
+      renderApp();
+    };
+
+    window.setLanguageFilter = function (lang) {
+      activeLanguageFilter = lang;
       renderApp();
     };
 
@@ -1063,18 +1485,33 @@
     window.resetFilters = function () {
       document.getElementById("searchInput").value = "";
       document.getElementById("userFilterSelect").value = "ALL";
+      document.getElementById("languageFilterSelect").value = "ALL";
+      document.getElementById("sortSelect").value = "NEWEST";
       activeUserFilter = "ALL";
+      activeLanguageFilter = "ALL";
+      activeGenreFilter = "ALL";
+      renderGenreFilterBar();
       setMediaFilter("ALL");
     };
 
-    function updateUserFilterDropdown() {
-      const select = document.getElementById("userFilterSelect");
-      const currentVal = select.value;
+    function updateFilterDropdowns() {
+      // Friends Dropdown
+      const userSelect = document.getElementById("userFilterSelect");
+      const currentUserVal = userSelect.value;
       const names = Array.from(new Set(allReviews.map((r) => r.userName).filter(Boolean)));
-      select.innerHTML =
+      userSelect.innerHTML =
         `<option value="ALL">All Friends (${names.length})</option>` +
-        names.map((n) => `<option value="${n}">Reviewed by ${n}</option>`).join("");
-      if (names.includes(currentVal)) select.value = currentVal;
+        names.map((n) => `<option value="${n}">${n}</option>`).join("");
+      if (names.includes(currentUserVal)) userSelect.value = currentUserVal;
+
+      // Languages Dropdown
+      const langSelect = document.getElementById("languageFilterSelect");
+      const currentLangVal = langSelect.value;
+      const langs = Array.from(new Set(allReviews.map((r) => r.language || "English").filter(Boolean)));
+      langSelect.innerHTML =
+        `<option value="ALL">All Languages (${langs.length})</option>` +
+        langs.map((l) => `<option value="${l}">${l}</option>`).join("");
+      if (langs.includes(currentLangVal)) langSelect.value = currentLangVal;
     }
 
     window.openProfileModal = function () {
@@ -1124,6 +1561,15 @@
       modal.classList.add("hidden");
       modal.classList.remove("flex");
     };
+
+    // Close modals with Escape key on desktop
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeDetailsModal();
+        closeLogModal();
+        closeProfileModal();
+      }
+    });
 
     initCloudSync();
   </script>
