@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#14181c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="CineBoxd" />
   <title>CineBoxd</title>
 
-  <!-- Custom Tri-Circle Browser Tab Favicon -->
+  <!-- Custom Tri-Circle Browser Tab & Home Screen Icon -->
   <link
     rel="icon"
     type="image/svg+xml"
@@ -86,6 +90,14 @@
       filter: blur(0);
       user-select: auto;
     }
+    @keyframes diceSpin {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.2); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    .spinning-dice {
+      animation: diceSpin 0.45s ease-in-out infinite;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col pb-20 sm:pb-0">
@@ -104,18 +116,29 @@
         <span id="syncStatus" class="text-[10px] px-2 py-0.5 rounded-full bg-lbBorder text-gray-300 hidden md:inline-block">Connecting...</span>
       </div>
 
-      <!-- Search & Desktop Controls -->
-      <div class="flex items-center gap-2 sm:gap-3 flex-1 sm:flex-initial justify-end">
-        <div class="relative flex-1 sm:flex-initial max-w-[200px] sm:max-w-none">
+      <!-- Search & Controls -->
+      <div class="flex items-center gap-2 sm:gap-2.5 flex-1 sm:flex-initial justify-end">
+        <div class="relative flex-1 sm:flex-initial max-w-[190px] sm:max-w-none">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400"></i>
           <input
             id="searchInput"
             type="text"
             placeholder="Search title, year, friend..."
             oninput="renderApp()"
-            class="bg-[#14181c] text-white text-xs sm:text-sm pl-8 pr-3 py-1.5 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen w-full sm:w-56"
+            class="bg-[#14181c] text-white text-xs sm:text-sm pl-8 pr-3 py-1.5 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen w-full sm:w-52"
           />
         </div>
+
+        <!-- PWA Install App Button -->
+        <button
+          id="installAppBtn"
+          onclick="triggerPwaInstall()"
+          class="hidden bg-[#14181c] hover:bg-lbBorder text-lbBlue border border-lbBlue/40 font-bold text-xs px-2.5 py-1.5 rounded-lg items-center gap-1.5 transition shrink-0"
+          title="Install CineBoxd to your Home Screen"
+        >
+          <i class="fa-solid fa-mobile-screen-button"></i>
+          <span class="hidden md:inline">Install App</span>
+        </button>
 
         <!-- Desktop Log Button -->
         <button
@@ -189,9 +212,20 @@
         </button>
       </div>
 
-      <!-- Clean Tab Subtitle -->
-      <div class="text-xs text-gray-400 self-start lg:self-auto">
-        <span id="activeTabExplainer">Your reviews + recent activity from friends</span>
+      <!-- Tab Subtitle + Watchlist Roulette Dice Button -->
+      <div class="flex items-center justify-between lg:justify-end gap-3">
+        <span id="activeTabExplainer" class="text-xs text-gray-400">Your reviews + recent activity from friends</span>
+
+        <!-- Watchlist Roulette Random Picker (Visible when viewing Watchlist) -->
+        <button
+          id="watchlistRouletteBtn"
+          onclick="pickRandomWatchlistShow()"
+          class="hidden bg-gradient-to-r from-sky-500 to-emerald-400 hover:opacity-95 text-black font-black text-xs px-3 py-1.5 rounded-lg shadow flex items-center gap-1.5 transition shrink-0"
+          title="Pick a random show from the filtered watchlist"
+        >
+          <i id="rouletteDiceIcon" class="fa-solid fa-dice"></i>
+          <span>Pick Random Show</span>
+        </button>
       </div>
     </div>
 
@@ -352,7 +386,7 @@
     </div>
   </footer>
 
-  <!-- SHOW DETAILS, REVIEWS & WATCHLIST MODAL -->
+  <!-- SHOW DETAILS, REVIEWS & REACTIONS MODAL -->
   <div id="detailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-lbCard border-t sm:border border-lbBorder rounded-t-2xl sm:rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
       <div class="sticky top-0 bg-lbCard/95 backdrop-blur z-10 px-5 pt-3 pb-2 border-b border-lbBorder flex items-center justify-between sm:hidden">
@@ -420,6 +454,7 @@
               <span id="detailReviewCount" class="text-xs text-gray-400 ml-auto">0 reviews</span>
             </div>
 
+            <!-- Watchlist Friends & Quick Hype Reaction Bar -->
             <div id="detailWatchlistBar" class="hidden mt-2.5 bg-sky-950/30 border border-lbBlue/30 rounded-lg px-3 py-2 text-xs text-gray-200 flex items-center justify-between gap-2 flex-wrap">
               <div class="flex items-center gap-1.5 flex-wrap" id="detailWatchlistUsers"></div>
             </div>
@@ -428,7 +463,7 @@
               <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">
                 Community Reviews
               </h3>
-              <span class="text-[10px] text-gray-500">Tap any name to view their catalogue</span>
+              <span class="text-[10px] text-gray-500">React with ❤️ / 🔥 or tap a name</span>
             </div>
             <div id="detailReviewsList" class="space-y-3 max-h-80 overflow-y-auto pr-1"></div>
           </div>
@@ -437,7 +472,7 @@
     </div>
   </div>
 
-  <!-- LOG / WATCHLIST / AUTO-SEARCH MODAL -->
+  <!-- LOG / WATCHLIST / AUTO-SEARCH & DUPLICATE MERGE MODAL -->
   <div id="logModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-lbCard border-t sm:border border-lbBorder rounded-t-2xl sm:rounded-xl max-w-xl w-full max-h-[94vh] overflow-y-auto p-4 sm:p-6 shadow-2xl">
       <div class="flex items-center justify-between border-b border-lbBorder pb-3 mb-3.5">
@@ -501,9 +536,16 @@
       <!-- SHOW METADATA FORM -->
       <form id="logForm" onsubmit="submitReviewForm(event)" class="space-y-3.5">
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
-          <div class="sm:col-span-2">
+          <div class="sm:col-span-2 relative">
             <label class="block text-xs font-semibold text-gray-300 mb-1">Show Title *</label>
-            <input id="inputTitle" type="text" required placeholder="Enter title manually..." class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen" />
+            <input
+              id="inputTitle"
+              type="text"
+              required
+              oninput="handleTitleDuplicateCheck(this.value)"
+              placeholder="Enter title manually..."
+              class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen"
+            />
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-300 mb-1">Type *</label>
@@ -516,6 +558,17 @@
             <label class="block text-xs font-semibold text-amber-400 mb-1">Release Year *</label>
             <input id="inputYear" type="number" required min="1900" max="2035" placeholder="2024" class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen" />
           </div>
+        </div>
+
+        <!-- DUPLICATE SHOW MERGING & TITLE AUTO-COMPLETE SUGGESTION BAR -->
+        <div id="duplicateMergeBox" class="hidden bg-emerald-950/40 border border-lbGreen/40 rounded-xl p-2.5">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[11px] font-bold text-lbGreen flex items-center gap-1.5">
+              <i class="fa-solid fa-link"></i>
+              <span>Already in CineBoxd — Tap to link & merge reviews under one poster:</span>
+            </span>
+          </div>
+          <div id="duplicateMergeList" class="space-y-1.5"></div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end">
@@ -668,6 +721,22 @@
         </div>
       </div>
 
+      <!-- PWA Home Screen Quick Guide -->
+      <div class="bg-[#14181c] border border-lbBorder rounded-lg p-3 mb-4 text-[11px] text-gray-400 flex items-center justify-between gap-2">
+        <div>
+          <strong class="text-white block"><i class="fa-solid fa-mobile-screen text-lbBlue mr-1"></i>Install as Phone App</strong>
+          <span>Tap browser menu → "Add to Home Screen" for full-screen mode.</span>
+        </div>
+        <button
+          id="modalInstallPwaBtn"
+          type="button"
+          onclick="triggerPwaInstall()"
+          class="hidden bg-lbBlue text-black font-bold text-[11px] px-3 py-1.5 rounded-lg shrink-0"
+        >
+          Install
+        </button>
+      </div>
+
       <div id="googleSignInSection" class="mb-5">
         <button
           type="button"
@@ -713,6 +782,63 @@
     <span id="toastText">Saved!</span>
   </div>
 
+  <!-- PWA WEB APP MANIFEST REGISTRATION -->
+  <script>
+    (function setupPwaManifest() {
+      const iconSvg =
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%2314181c'/%3E%3Ccircle cx='144' cy='256' r='78' fill='%23ff8000'/%3E%3Ccircle cx='256' cy='256' r='78' fill='%2300e054'/%3E%3Ccircle cx='368' cy='256' r='78' fill='%2340bcf4'/%3E%3C/svg%3E";
+
+      const manifest = {
+        name: "CineBoxd — Movie & Series Diary",
+        short_name: "CineBoxd",
+        start_url: window.location.href,
+        display: "standalone",
+        background_color: "#14181c",
+        theme_color: "#14181c",
+        icons: [
+          { src: iconSvg, sizes: "192x192", type: "image/svg+xml" },
+          { src: iconSvg, sizes: "512x512", type: "image/svg+xml" }
+        ]
+      };
+
+      const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+      const manifestUrl = URL.createObjectURL(blob);
+      const link = document.createElement("link");
+      link.rel = "manifest";
+      link.href = manifestUrl;
+      document.head.appendChild(link);
+    })();
+
+    let deferredInstallPrompt = null;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const topBtn = document.getElementById("installAppBtn");
+      const modalBtn = document.getElementById("modalInstallPwaBtn");
+      if (topBtn) {
+        topBtn.classList.remove("hidden");
+        topBtn.classList.add("flex");
+      }
+      if (modalBtn) {
+        modalBtn.classList.remove("hidden");
+      }
+    });
+
+    window.triggerPwaInstall = async function () {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice.outcome === "accepted") {
+          document.getElementById("installAppBtn")?.classList.add("hidden");
+          document.getElementById("modalInstallPwaBtn")?.classList.add("hidden");
+        }
+        deferredInstallPrompt = null;
+      } else {
+        alert("To install CineBoxd on your phone:\n\n• iPhone (Safari): Tap the Share icon at the bottom → 'Add to Home Screen'.\n• Android (Chrome): Tap the 3-dot menu → 'Install app' or 'Add to Home screen'.");
+      }
+    };
+  </script>
+
   <!-- FIREBASE & APPLICATION LOGIC -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -733,6 +859,8 @@
       updateDoc,
       deleteDoc,
       doc,
+      arrayUnion,
+      arrayRemove,
       onSnapshot
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -747,7 +875,7 @@
     };
 
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-    const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000; // 48-Hour Window for Friends' Reviews on My Feed
+    const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
     const ALL_GENRES = [
       "Sci-Fi", "Thriller", "Drama", "Action", "Comedy",
       "Crime", "Mystery", "Romance", "Horror", "Anime", "Fantasy"
@@ -763,7 +891,7 @@
     let allReviews = [];
     let activeMainTab = "MY_FEED"; // 'MY_FEED' | 'WATCHLIST' | 'CATALOGUES' | 'ALL_COMMUNITY'
     let selectedCatalogueUser = null;
-    let catalogueSubTab = "COMPLETED"; // 'COMPLETED' | 'WATCHLIST'
+    let catalogueSubTab = "COMPLETED";
 
     let formEntryStatus = "COMPLETED";
     let selectedRating = 5;
@@ -806,6 +934,16 @@
       let sum = 0;
       for (let i = 0; i < str.length; i++) sum += str.charCodeAt(i);
       return palette[sum % palette.length];
+    }
+
+    // NORMALIZED SHOW KEY FOR DUPLICATE MERGING (e.g. "Spider-Man: Across" == "spiderman across")
+    function normalizeShowKey(title) {
+      return (title || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, "")
+        .replace(/\b(the|a|an)\b/g, "")
+        .replace(/\s+/g, "")
+        .trim();
     }
 
     // SHAREABLE FRIEND CATALOGUE LINK (?user=Name)
@@ -856,7 +994,6 @@
       } catch (e) {}
     }
 
-    // Helper: Check if a review/entry belongs to the active user
     function isReviewMine(rev) {
       if (!rev) return false;
       if (rev.userId && currentUser.uid && rev.userId === currentUser.uid) {
@@ -865,7 +1002,6 @@
       return (rev.userName || "").toLowerCase() === (currentUser.name || "").toLowerCase();
     }
 
-    // Helper: Check if a friend's review is within the 48-hour window
     function isWithin48Hours(createdAt) {
       if (!createdAt) return false;
       return Date.now() - Number(createdAt) <= TWO_DAYS_MS;
@@ -885,6 +1021,71 @@
       const days = Math.floor(hours / 24);
       return `${days}d ago`;
     }
+
+    // DUPLICATE SHOW MERGING & TITLE AUTO-COMPLETE
+    window.handleTitleDuplicateCheck = function (typedValue) {
+      const box = document.getElementById("duplicateMergeBox");
+      const list = document.getElementById("duplicateMergeList");
+      const query = (typedValue || "").trim().toLowerCase();
+      const normQuery = normalizeShowKey(typedValue);
+
+      if (query.length < 2) {
+        box.classList.add("hidden");
+        return;
+      }
+
+      const existingShows = getGroupedShows(allReviews);
+      const matches = existingShows
+        .filter((s) => {
+          const titleLow = s.title.toLowerCase();
+          return titleLow.includes(query) || (normQuery && s.key.includes(normQuery));
+        })
+        .slice(0, 3);
+
+      if (matches.length === 0) {
+        box.classList.add("hidden");
+        return;
+      }
+
+      box.classList.remove("hidden");
+      list.innerHTML = matches
+        .map(
+          (m) => `
+          <button
+            type="button"
+            onclick="applyMergedShowTemplate('${m.key.replace(/'/g, "\\'")}')"
+            class="w-full flex items-center justify-between gap-2 bg-[#14181c] hover:bg-lbBorder px-2.5 py-1.5 rounded-lg border border-lbBorder text-left transition"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <img src="${m.coverUrl || getFallbackPoster(m.title)}" class="w-6 h-9 rounded object-cover shrink-0" />
+              <div class="min-w-0">
+                <span class="text-white font-bold text-xs truncate block">${m.title} ${m.year ? `(${m.year})` : ""}</span>
+                <span class="text-[10px] text-gray-400">${m.type} • ${m.language} • ${m.completedReviews.length + m.watchlistEntries.length} entries</span>
+              </div>
+            </div>
+            <span class="text-[10px] font-bold text-lbGreen shrink-0">Link & Auto-Fill</span>
+          </button>
+        `
+        )
+        .join("");
+    };
+
+    window.applyMergedShowTemplate = function (showKey) {
+      const existingShows = getGroupedShows(allReviews);
+      const match = existingShows.find((s) => s.key === showKey);
+      if (!match) return;
+
+      document.getElementById("inputTitle").value = match.title;
+      document.getElementById("inputType").value = match.type || "Movie";
+      document.getElementById("inputYear").value = match.year || new Date().getFullYear();
+      document.getElementById("inputLanguage").value = match.language || "English";
+      document.getElementById("inputCover").value = match.coverUrl || "";
+      selectedFormGenres = match.genres && match.genres.length ? [...match.genres] : ["Drama"];
+      renderFormGenrePills();
+      updateFormPosterPreview();
+      document.getElementById("duplicateMergeBox").classList.add("hidden");
+      showToast(`Linked to "${match.title}"`);
+    };
 
     // AUTOMATIC POSTER & METADATA SEARCH
     window.handleAutoSearchInput = function (query) {
@@ -1024,7 +1225,10 @@
 
     window.useQueryAsManualTitle = function () {
       const q = document.getElementById("apiSearchInput").value.trim();
-      if (q) document.getElementById("inputTitle").value = q;
+      if (q) {
+        document.getElementById("inputTitle").value = q;
+        handleTitleDuplicateCheck(q);
+      }
       document.getElementById("apiSearchResults").classList.add("hidden");
     };
 
@@ -1040,6 +1244,7 @@
       selectedFormGenres = item.genres && item.genres.length ? item.genres : ["Drama"];
       renderFormGenrePills();
       updateFormPosterPreview();
+      handleTitleDuplicateCheck(item.title);
 
       document.getElementById("apiSearchResults").classList.add("hidden");
       document.getElementById("apiSearchInput").value = "";
@@ -1050,6 +1255,54 @@
       const url = document.getElementById("inputCover").value.trim();
       const title = document.getElementById("inputTitle").value.trim() || "Poster";
       document.getElementById("formPosterPreview").src = url || getFallbackPoster(title);
+    };
+
+    // QUICK REVIEW & WATCHLIST REACTIONS (❤️ Love & 🔥 Agree)
+    window.toggleReaction = async function (reviewId, type) {
+      const target = allReviews.find((r) => r.id === reviewId);
+      if (!target) return;
+
+      const fieldName = type === "fire" ? "fireUsers" : "likeUsers";
+      const existingArr = Array.isArray(target[fieldName]) ? target[fieldName] : [];
+      const userKey = currentUser.name || currentUser.uid;
+      const alreadyReacted = existingArr.includes(userKey);
+
+      if (useLocalStorageFallback) {
+        const updatedArr = alreadyReacted
+          ? existingArr.filter((u) => u !== userKey)
+          : [...existingArr, userKey];
+        allReviews = allReviews.map((r) =>
+          r.id === reviewId ? { ...r, [fieldName]: updatedArr } : r
+        );
+        saveFallbackLocal();
+      } else {
+        try {
+          await updateDoc(doc(db, "cineboxd_reviews", reviewId), {
+            [fieldName]: alreadyReacted ? arrayRemove(userKey) : arrayUnion(userKey)
+          });
+        } catch (err) {
+          console.warn("Reaction update blocked by rules or offline:", err.message);
+        }
+      }
+    };
+
+    // WATCHLIST ROULETTE ("What Should We Watch Tonight?")
+    window.pickRandomWatchlistShow = function () {
+      const pool = getFilteredShowsForCurrentView();
+      if (pool.length === 0) {
+        showToast("No shows in this watchlist to pick from!");
+        return;
+      }
+
+      const dice = document.getElementById("rouletteDiceIcon");
+      if (dice) dice.classList.add("spinning-dice");
+
+      setTimeout(() => {
+        if (dice) dice.classList.remove("spinning-dice");
+        const winner = pool[Math.floor(Math.random() * pool.length)];
+        showToast(`Tonight's Pick: ${winner.title}!`);
+        openShowDetails(winner.key);
+      }, 500);
     };
 
     // AUTHENTICATION HANDLERS
@@ -1393,11 +1646,11 @@
       renderFormGenrePills();
     };
 
-    // GROUP ENTRIES BY SHOW TITLE
+    // GROUP ENTRIES BY NORMALIZED SHOW KEY (MERGES DUPLICATES AUTOMATICALLY)
     function getGroupedShows(sourceReviews = allReviews) {
       const map = new Map();
       for (const rev of sourceReviews) {
-        const key = (rev.title || "").trim().toLowerCase();
+        const key = normalizeShowKey(rev.title);
         if (!key) continue;
         if (!map.has(key)) {
           map.set(key, {
@@ -1434,7 +1687,6 @@
       return Array.from(map.values());
     }
 
-    // BUILD USER PROFILES FOR THE CATALOGUE DIRECTORY
     function getUserCataloguesSummary() {
       const userMap = new Map();
       for (const rev of allReviews) {
@@ -1482,7 +1734,6 @@
       return html;
     }
 
-    // RENDER FRESH FROM FRIENDS SPOTLIGHT STRIP
     function renderFreshFromFriendsStrip() {
       const stripSection = document.getElementById("freshFriendsSection");
       const stripContainer = document.getElementById("freshFriendsStrip");
@@ -1504,7 +1755,7 @@
       stripSection.classList.remove("hidden");
       stripContainer.innerHTML = freshFriendReviews
         .map((r) => {
-          const showKey = (r.title || "").trim().toLowerCase().replace(/'/g, "\\'");
+          const showKey = normalizeShowKey(r.title).replace(/'/g, "\\'");
           const avatar = r.userPhoto
             ? `<img src="${r.userPhoto}" class="w-5 h-5 rounded-full object-cover" />`
             : `<span style="background-color:${r.userColor || "#db2777"}" class="w-5 h-5 rounded-full text-[10px] font-bold text-white flex items-center justify-center">${(r.userName || "F")[0].toUpperCase()}</span>`;
@@ -1533,6 +1784,53 @@
         .join("");
     }
 
+    // HELPER TO GET FILTERED SHOWS FOR CURRENT VIEW (Used by Grid & Watchlist Roulette)
+    function getFilteredShowsForCurrentView() {
+      const searchVal = (document.getElementById("searchInput").value || "").toLowerCase().trim();
+      const allShows = getGroupedShows(allReviews);
+
+      let workingShows = [];
+      if (activeMainTab === "CATALOGUES" && selectedCatalogueUser) {
+        const targetLower = selectedCatalogueUser.toLowerCase();
+        const userEntries = allReviews.filter(
+          (r) => (r.userName || "").trim().toLowerCase() === targetLower
+        );
+        const groupedForUser = getGroupedShows(userEntries);
+        workingShows = groupedForUser.filter((s) =>
+          catalogueSubTab === "COMPLETED"
+            ? s.completedReviews.length > 0
+            : s.watchlistEntries.length > 0
+        );
+      } else if (activeMainTab === "MY_FEED") {
+        workingShows = allShows.filter((show) =>
+          show.completedReviews.some((r) => isReviewMine(r) || isWithin48Hours(r.createdAt))
+        );
+      } else if (activeMainTab === "WATCHLIST") {
+        workingShows = allShows.filter((show) =>
+          show.watchlistEntries.some((r) => isReviewMine(r))
+        );
+      } else {
+        workingShows = allShows.filter((show) => show.completedReviews.length > 0);
+      }
+
+      return workingShows.filter((show) => {
+        if (activeMediaFilter !== "ALL" && show.type !== activeMediaFilter) return false;
+        if (activeLanguageFilter !== "ALL" && (show.language || "English") !== activeLanguageFilter) return false;
+        if (activeGenreFilter !== "ALL" && !(show.genres || []).includes(activeGenreFilter)) return false;
+        if (searchVal) {
+          const matchTitle = show.title.toLowerCase().includes(searchVal);
+          const matchYear = String(show.year || "").toLowerCase().includes(searchVal);
+          const matchLang = (show.language || "").toLowerCase().includes(searchVal);
+          const matchGenre = (show.genres || []).some((g) => g.toLowerCase().includes(searchVal));
+          const matchUser = [...show.completedReviews, ...show.watchlistEntries].some((r) =>
+            (r.userName || "").toLowerCase().includes(searchVal)
+          );
+          return matchTitle || matchYear || matchLang || matchGenre || matchUser;
+        }
+        return true;
+      });
+    }
+
     // MAIN RENDER FUNCTION
     window.renderApp = function () {
       const searchVal = (document.getElementById("searchInput").value || "").toLowerCase().trim();
@@ -1540,22 +1838,31 @@
       const allShows = getGroupedShows(allReviews);
       const userSummaries = getUserCataloguesSummary();
 
-      // My Feed: Shows I reviewed permanently + Shows with a friend's review <48h old
       const myFeedShows = allShows.filter((show) =>
         show.completedReviews.some((r) => isReviewMine(r) || isWithin48Hours(r.createdAt))
       );
-
-      // My Watchlist: ONLY the currently logged-in user's watch-later shows
       const myOwnWatchlistShows = allShows.filter((show) =>
         show.watchlistEntries.some((r) => isReviewMine(r))
       );
-
       const communityShows = allShows.filter((show) => show.completedReviews.length > 0);
 
       document.getElementById("badgeMyFeedCount").textContent = myFeedShows.length;
       document.getElementById("badgeWatchlistCount").textContent = myOwnWatchlistShows.length;
       document.getElementById("badgeUsersCount").textContent = userSummaries.length;
       document.getElementById("badgeCommunityCount").textContent = communityShows.length;
+
+      // Show/Hide Watchlist Roulette Dice Button
+      const isWatchlistMode =
+        activeMainTab === "WATCHLIST" ||
+        (activeMainTab === "CATALOGUES" && selectedCatalogueUser && catalogueSubTab === "WATCHLIST");
+      const rouletteBtn = document.getElementById("watchlistRouletteBtn");
+      if (isWatchlistMode) {
+        rouletteBtn.classList.remove("hidden");
+        rouletteBtn.classList.add("flex");
+      } else {
+        rouletteBtn.classList.add("hidden");
+        rouletteBtn.classList.remove("flex");
+      }
 
       renderFreshFromFriendsStrip();
 
@@ -1629,7 +1936,6 @@
                     </button>
                   </div>
 
-                  <!-- Mini Poster Strip Preview -->
                   <div class="grid grid-cols-4 gap-2 mt-4">
                     ${
                       recentPosters.length > 0
@@ -1663,8 +1969,6 @@
       usersGrid.classList.remove("grid");
       standardFilters.classList.remove("hidden");
 
-      let workingShows = [];
-
       if (activeMainTab === "CATALOGUES" && selectedCatalogueUser) {
         userCatHeader.classList.remove("hidden");
         const targetLower = selectedCatalogueUser.toLowerCase();
@@ -1686,40 +1990,11 @@
 
         const sampleColor = userEntries[0]?.userColor || pickColorForName(selectedCatalogueUser);
         document.getElementById("catalogueUserAvatarBox").innerHTML = `<span style="background-color:${sampleColor}" class="w-11 h-11 rounded-full text-base font-black text-white flex items-center justify-center">${selectedCatalogueUser[0].toUpperCase()}</span>`;
-
-        const groupedForUser = getGroupedShows(userEntries);
-        workingShows = groupedForUser.filter((s) =>
-          catalogueSubTab === "COMPLETED"
-            ? s.completedReviews.length > 0
-            : s.watchlistEntries.length > 0
-        );
       } else {
         userCatHeader.classList.add("hidden");
-        if (activeMainTab === "MY_FEED") {
-          workingShows = myFeedShows;
-        } else if (activeMainTab === "WATCHLIST") {
-          workingShows = myOwnWatchlistShows;
-        } else {
-          workingShows = communityShows;
-        }
       }
 
-      const filtered = workingShows.filter((show) => {
-        if (activeMediaFilter !== "ALL" && show.type !== activeMediaFilter) return false;
-        if (activeLanguageFilter !== "ALL" && (show.language || "English") !== activeLanguageFilter) return false;
-        if (activeGenreFilter !== "ALL" && !(show.genres || []).includes(activeGenreFilter)) return false;
-        if (searchVal) {
-          const matchTitle = show.title.toLowerCase().includes(searchVal);
-          const matchYear = String(show.year || "").toLowerCase().includes(searchVal);
-          const matchLang = (show.language || "").toLowerCase().includes(searchVal);
-          const matchGenre = (show.genres || []).some((g) => g.toLowerCase().includes(searchVal));
-          const matchUser = [...show.completedReviews, ...show.watchlistEntries].some((r) =>
-            (r.userName || "").toLowerCase().includes(searchVal)
-          );
-          return matchTitle || matchYear || matchLang || matchGenre || matchUser;
-        }
-        return true;
-      });
+      const filtered = getFilteredShowsForCurrentView();
 
       filtered.sort((a, b) => {
         const avgA = a.completedReviews.length
@@ -1777,7 +2052,6 @@
             (r) => !isReviewMine(r) && isWithin48Hours(r.createdAt)
           );
 
-          // Clean relative timestamp pill on My Feed (e.g. "10h ago")
           let feedStatusPill = "";
           if (activeMainTab === "MY_FEED") {
             if (freshFriendRev && !hasMyReview) {
@@ -1786,10 +2060,6 @@
               feedStatusPill = `<span class="bg-black/80 text-lbGreen border border-lbGreen/40 text-[9px] font-bold px-1.5 py-0.5 rounded">My Diary</span>`;
             }
           }
-
-          const isWatchlistMode =
-            activeMainTab === "WATCHLIST" ||
-            (activeMainTab === "CATALOGUES" && catalogueSubTab === "WATCHLIST");
 
           const activeList = isWatchlistMode ? show.watchlistEntries : displayReviews;
           const uniqueUsers = [];
@@ -1824,7 +2094,6 @@
                   onerror="this.src='${getFallbackPoster(show.title)}'"
                   class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                 />
-                <!-- Top Badges -->
                 <div class="absolute top-2 inset-x-2 flex items-center justify-between gap-1 pointer-events-none">
                   <span class="text-[9px] sm:text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-black/80 text-white backdrop-blur-sm">
                     ${show.type}
@@ -1835,7 +2104,6 @@
                   }
                 </div>
 
-                <!-- Bottom Gradient Bar -->
                 <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2.5 flex items-end justify-between">
                   <div class="flex flex-wrap gap-1">
                     ${topGenres
@@ -1851,7 +2119,6 @@
                 </div>
               </div>
 
-              <!-- Title + Release Year -->
               <div class="mt-2 px-0.5">
                 <div class="flex items-baseline justify-between gap-1.5">
                   <h3 class="text-white font-bold text-xs sm:text-sm truncate" title="${show.title}">${show.title}</h3>
@@ -1887,7 +2154,7 @@
         .join("");
     };
 
-    // SHOW DETAILS MODAL
+    // SHOW DETAILS MODAL WITH REACTIONS
     window.openShowDetails = function (showKey) {
       currentlyOpenShowKey = showKey;
       refreshOpenDetailsModal();
@@ -1972,10 +2239,16 @@
         watchBtn.onclick = () => quickAddShowToWatchlist(show);
       }
 
+      // Watchlist Friends & Quick Hype Reaction
       const wlBar = document.getElementById("detailWatchlistBar");
       const wlUsers = document.getElementById("detailWatchlistUsers");
       if (show.watchlistEntries.length > 0) {
         wlBar.classList.remove("hidden");
+        const primaryWl = show.watchlistEntries[0];
+        const fireList = Array.isArray(primaryWl.fireUsers) ? primaryWl.fireUsers : [];
+        const userKey = currentUser.name || currentUser.uid;
+        const hypedByMe = fireList.includes(userKey);
+
         wlUsers.innerHTML =
           `<span class="text-lbBlue font-bold"><i class="fa-solid fa-bookmark mr-1"></i>On Watchlist:</span>` +
           show.watchlistEntries
@@ -1983,7 +2256,18 @@
               (w) =>
                 `<button onclick="closeDetailsModal(); openUserCatalogue('${(w.userName || "Guest").replace(/'/g, "\\'")}')" class="bg-[#14181c] hover:border-lbGreen border border-lbBorder px-2 py-0.5 rounded-full text-[11px] text-white transition">${w.userName}</button>`
             )
-            .join("");
+            .join("") +
+          `<button
+             onclick="toggleReaction('${primaryWl.id}', 'fire')"
+             class="ml-auto text-[11px] px-2.5 py-0.5 rounded-full border transition flex items-center gap-1 font-bold ${
+               hypedByMe
+                 ? "bg-amber-950/80 border-lbOrange text-lbOrange"
+                 : "bg-[#14181c] border-lbBorder text-gray-300 hover:border-lbOrange"
+             }"
+             title="React to this watchlist pick"
+           >
+             <span>🔥</span><span>${fireList.length}</span>
+           </button>`;
       } else {
         wlBar.classList.add("hidden");
       }
@@ -1997,6 +2281,8 @@
         `;
         return;
       }
+
+      const userKey = currentUser.name || currentUser.uid;
 
       listEl.innerHTML = show.completedReviews
         .map((r) => {
@@ -2024,6 +2310,11 @@
                </button>`
             : "";
 
+          const likes = Array.isArray(r.likeUsers) ? r.likeUsers : [];
+          const fires = Array.isArray(r.fireUsers) ? r.fireUsers : [];
+          const iLiked = likes.includes(userKey);
+          const iFired = fires.includes(userKey);
+
           return `
             <div class="bg-[#14181c] border border-lbBorder rounded-lg p-3.5">
               <div class="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
@@ -2040,7 +2331,7 @@
                     ${renderStarsHTML(r.rating)}
                   </div>
                   <span class="text-[11px] font-bold text-lbGreen">${Number(r.rating).toFixed(1)}</span>
-                  ${r.liked ? '<i class="fa-solid fa-heart text-lbOrange text-xs ml-0.5" title="Liked"></i>' : ""}
+                  ${r.liked ? '<i class="fa-solid fa-heart text-lbOrange text-xs ml-0.5" title="Liked show"></i>' : ""}
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="text-[10px] text-gray-500">${relTime}</span>
@@ -2049,6 +2340,34 @@
               </div>
               ${spoilerWarning}
               <p class="text-gray-200 text-xs sm:text-sm leading-relaxed whitespace-pre-line ${r.spoiler ? "spoiler-blur" : ""}">${r.reviewText}</p>
+
+              <!-- Quick Reaction Pills -->
+              <div class="flex items-center gap-2 mt-2.5 pt-2 border-t border-lbBorder/60">
+                <button
+                  type="button"
+                  onclick="toggleReaction('${r.id}', 'like')"
+                  class="text-[11px] px-2.5 py-0.5 rounded-full border transition flex items-center gap-1 font-semibold ${
+                    iLiked
+                      ? "bg-pink-950/70 border-pink-500/60 text-pink-300"
+                      : "bg-lbCard border-lbBorder text-gray-400 hover:text-white"
+                  }"
+                  title="Love this review"
+                >
+                  <span>❤️</span><span>${likes.length}</span>
+                </button>
+                <button
+                  type="button"
+                  onclick="toggleReaction('${r.id}', 'fire')"
+                  class="text-[11px] px-2.5 py-0.5 rounded-full border transition flex items-center gap-1 font-semibold ${
+                    iFired
+                      ? "bg-amber-950/70 border-lbOrange/60 text-lbOrange"
+                      : "bg-lbCard border-lbBorder text-gray-400 hover:text-white"
+                  }"
+                  title="Agree with this take"
+                >
+                  <span>🔥</span><span>Agree ${fires.length > 0 ? fires.length : ""}</span>
+                </button>
+              </div>
             </div>
           `;
         })
@@ -2069,6 +2388,8 @@
         liked: false,
         spoiler: false,
         reviewText: "",
+        likeUsers: [],
+        fireUsers: [],
         userId: currentUser.uid,
         userName: currentUser.name,
         userPhoto: currentUser.photoURL || "",
@@ -2129,6 +2450,7 @@
       editingReviewId = reviewToEdit ? reviewToEdit.id : null;
       document.getElementById("apiSearchInput").value = "";
       document.getElementById("apiSearchResults").classList.add("hidden");
+      document.getElementById("duplicateMergeBox").classList.add("hidden");
 
       const initialStatus = reviewToEdit
         ? reviewToEdit.status || "COMPLETED"
@@ -2294,7 +2616,13 @@
           allReviews = allReviews.map((r) => (r.id === targetEditId ? { ...r, ...payload } : r));
           showToast("Entry updated!");
         } else {
-          allReviews.unshift({ ...payload, id: "local_" + now, createdAt: now });
+          allReviews.unshift({
+            ...payload,
+            likeUsers: [],
+            fireUsers: [],
+            id: "local_" + now,
+            createdAt: now
+          });
           showToast(formEntryStatus === "WATCHLIST" ? "Saved to My Watchlist!" : "Review saved!");
         }
         saveFallbackLocal();
@@ -2304,7 +2632,12 @@
             await updateDoc(doc(db, "cineboxd_reviews", targetEditId), payload);
             showToast("Entry updated!");
           } else {
-            await addDoc(reviewsCollectionRef, { ...payload, createdAt: now });
+            await addDoc(reviewsCollectionRef, {
+              ...payload,
+              likeUsers: [],
+              fireUsers: [],
+              createdAt: now
+            });
             showToast(formEntryStatus === "WATCHLIST" ? "Saved to My Watchlist!" : "Review saved!");
           }
         } catch (err) {
