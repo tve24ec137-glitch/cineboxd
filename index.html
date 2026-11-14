@@ -3,7 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>CineBoxd — Personal Diary, 48h Friend Feed & User Catalogues</title>
+  <title>CineBoxd</title>
+
+  <!-- Custom Tri-Circle Browser Tab Favicon -->
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2314181c'/%3E%3Ccircle cx='18' cy='32' r='10' fill='%23ff8000'/%3E%3Ccircle cx='32' cy='32' r='10' fill='%2300e054'/%3E%3Ccircle cx='46' cy='32' r='10' fill='%2340bcf4'/%3E%3C/svg%3E"
+  />
+  <link
+    rel="apple-touch-icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2314181c'/%3E%3Ccircle cx='18' cy='32' r='10' fill='%23ff8000'/%3E%3Ccircle cx='32' cy='32' r='10' fill='%2300e054'/%3E%3Ccircle cx='46' cy='32' r='10' fill='%2340bcf4'/%3E%3C/svg%3E"
+  />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <script>
@@ -131,7 +143,7 @@
     </div>
   </header>
 
-  <!-- PRIMARY VIEW SWITCHER (MY FEED 48H / WATCHLIST / FRIENDS CATALOGUES / ALL COMMUNITY) -->
+  <!-- PRIMARY VIEW SWITCHER -->
   <section class="max-w-6xl mx-auto w-full px-3.5 sm:px-4 pt-4 sm:pt-5 pb-2">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-lbBorder">
       <!-- 4 Main Mode Tabs -->
@@ -140,10 +152,9 @@
           id="tab-MY_FEED"
           onclick="setMainTab('MY_FEED')"
           class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-lbGreen text-black shadow shrink-0"
-          title="Shows you reviewed + Friend reviews from the last 48 hours"
         >
           <i class="fa-solid fa-bolt"></i>
-          <span>My Feed (48h)</span>
+          <span>My Feed</span>
           <span id="badgeMyFeedCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-black/20 font-extrabold">0</span>
         </button>
 
@@ -153,7 +164,7 @@
           class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-300 hover:text-white shrink-0"
         >
           <i class="fa-solid fa-bookmark"></i>
-          <span>Watchlist</span>
+          <span>My Watchlist</span>
           <span id="badgeWatchlistCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-lbBorder text-lbBlue font-extrabold">0</span>
         </button>
 
@@ -178,23 +189,13 @@
         </button>
       </div>
 
-      <!-- Info Banner & Sample Loader -->
-      <div class="flex items-center justify-between sm:justify-end gap-3 text-xs bg-lbCard/70 border border-lbBorder px-3 py-1.5 rounded-lg">
-        <span id="activeTabExplainer" class="text-[11px] text-gray-300">
-          Your shows + friends' reviews from the last 2 days
-        </span>
-        <span class="text-lbBorder">|</span>
-        <button
-          onclick="seedSampleShows()"
-          class="text-[11px] text-lbBlue hover:underline font-semibold flex items-center gap-1 shrink-0"
-          title="Load sample movies (both fresh <48h and older >2d friend reviews)"
-        >
-          <i class="fa-solid fa-wand-magic-sparkles"></i>Load Samples
-        </button>
+      <!-- Clean Tab Subtitle -->
+      <div class="text-xs text-gray-400 self-start lg:self-auto">
+        <span id="activeTabExplainer">Your reviews + recent activity from friends</span>
       </div>
     </div>
 
-    <!-- FILTER CONTROLS (Hidden when on Friends' Catalogues Directory unless viewing a specific user) -->
+    <!-- FILTER CONTROLS -->
     <div id="standardFiltersBar">
       <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-2.5">
         <button onclick="setMediaFilter('ALL')" id="filter-ALL" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-lbGreen text-black shrink-0">All Types</button>
@@ -228,17 +229,14 @@
     </div>
   </section>
 
-  <!-- 48-HOUR FRESH FROM FRIENDS SPOTLIGHT STRIP (Shown on My Feed when friends logged reviews within 2 days) -->
+  <!-- FRESH FROM FRIENDS SPOTLIGHT STRIP -->
   <section id="freshFriendsSection" class="max-w-6xl mx-auto w-full px-3.5 sm:px-4 pt-2 pb-1 hidden">
     <div class="bg-gradient-to-r from-emerald-950/50 via-lbCard to-lbCard border border-lbGreen/30 rounded-xl p-3">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-lbGreen animate-ping"></span>
-          <h2 class="text-xs font-bold uppercase tracking-wider text-lbGreen">
-            Fresh From Friends (Last 48 Hours)
-          </h2>
-        </div>
-        <span class="text-[10px] text-gray-400">Auto-moves to Friends' Catalogues after 2 days</span>
+      <div class="flex items-center gap-2 mb-2">
+        <span class="w-2 h-2 rounded-full bg-lbGreen animate-ping"></span>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-lbGreen">
+          Fresh from friends
+        </h2>
       </div>
       <div id="freshFriendsStrip" class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1"></div>
     </div>
@@ -247,22 +245,29 @@
   <!-- MAIN CONTENT AREA -->
   <main class="max-w-6xl mx-auto w-full px-3.5 sm:px-4 py-3 flex-1">
 
-    <!-- SELECTED USER CATALOGUE BANNER (Shown when inspecting a specific user's catalogue) -->
+    <!-- SELECTED USER CATALOGUE BANNER -->
     <div id="selectedUserCatalogueHeader" class="hidden mb-5 bg-lbCard border border-lbBorder rounded-xl p-4">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-3.5">
           <button
             onclick="closeUserCatalogue()"
-            class="bg-[#14181c] hover:bg-lbBorder text-gray-300 hover:text-white px-3 py-2 rounded-lg border border-lbBorder text-xs font-bold flex items-center gap-1.5 transition"
+            class="bg-[#14181c] hover:bg-lbBorder text-gray-300 hover:text-white px-3 py-2 rounded-lg border border-lbBorder text-xs font-bold flex items-center gap-1.5 transition shrink-0"
           >
             <i class="fa-solid fa-arrow-left"></i>
             <span>All Users</span>
           </button>
-          <div id="catalogueUserAvatarBox"></div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 id="catalogueUserName" class="text-white font-black text-lg sm:text-xl">User's Catalogue</h2>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-lbBorder text-lbOrange font-bold">Full Archive</span>
+          <div id="catalogueUserAvatarBox" class="shrink-0"></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 id="catalogueUserName" class="text-white font-black text-lg sm:text-xl truncate">User's Catalogue</h2>
+              <button
+                onclick="shareCatalogueLink(selectedCatalogueUser)"
+                class="text-[11px] bg-[#14181c] hover:bg-lbBorder text-lbBlue border border-lbBorder px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition"
+                title="Copy shareable link to this catalogue"
+              >
+                <i class="fa-solid fa-share-nodes"></i>
+                <span>Share Link</span>
+              </button>
             </div>
             <p id="catalogueUserStats" class="text-xs text-gray-400 mt-0.5">0 Completed • 0 Watchlist • 0.0★ Avg</p>
           </div>
@@ -288,7 +293,7 @@
       </div>
     </div>
 
-    <!-- USERS DIRECTORY GRID (Shown when on 'Friends' Catalogues' tab and no specific user is clicked yet) -->
+    <!-- USERS DIRECTORY GRID -->
     <div id="usersCatalogueGrid" class="hidden grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 my-2"></div>
 
     <!-- EMPTY STATE -->
@@ -296,7 +301,7 @@
       <i id="emptyStateIcon" class="fa-solid fa-film text-4xl text-gray-500 mb-3"></i>
       <h2 id="emptyStateTitle" class="text-white font-bold text-lg">No shows in this view yet</h2>
       <p id="emptyStateSub" class="text-xs sm:text-sm text-gray-400 max-w-md mx-auto mt-1 mb-5">
-        Log a movie or series you completed, or check Friends' Catalogues to see older reviews from your group!
+        Log a movie or series you completed, or check Friends' Catalogues to see reviews from your group.
       </p>
       <div class="flex flex-wrap justify-center gap-3">
         <button onclick="openLogModal()" class="bg-lbGreen text-black font-bold text-xs sm:text-sm px-4 py-2.5 rounded-lg">
@@ -339,11 +344,11 @@
     </button>
   </nav>
 
-  <!-- FOOTER -->
-  <footer class="border-t border-lbBorder mt-10 py-6 text-center text-xs text-gray-500">
-    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-      <span>CineBoxd — 48-Hour Friend Feed + Permanent Personal & Friend Catalogues</span>
-      <span>Auto Poster Search (iTunes + TVMaze) + Manual Override</span>
+  <!-- CLEAN FOOTER -->
+  <footer class="border-t border-lbBorder mt-10 py-5 text-center text-xs text-gray-500">
+    <div class="max-w-6xl mx-auto px-4 flex items-center justify-between">
+      <span class="font-bold text-gray-400">CINEBOXD</span>
+      <span>Shared Movie & Series Diary</span>
     </div>
   </footer>
 
@@ -421,7 +426,7 @@
 
             <div class="flex items-center justify-between mt-4 mb-2.5 border-b border-lbBorder pb-1.5">
               <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">
-                All Community Reviews for This Show
+                Community Reviews
               </h3>
               <span class="text-[10px] text-gray-500">Tap any name to view their catalogue</span>
             </div>
@@ -598,17 +603,16 @@
         <div id="watchlistNoteSection" class="hidden bg-sky-950/30 border border-lbBlue/40 rounded-lg p-3 text-xs text-gray-300">
           <div class="flex items-center gap-2 text-lbBlue font-bold mb-1">
             <i class="fa-solid fa-bookmark"></i>
-            <span>Saving to Watchlist / Plan to Watch</span>
+            <span>Saving to My Watchlist</span>
           </div>
           <p class="text-[11px] text-gray-400">
-            This show will appear in your Watchlist and inside your personal Catalogue. Once you finish watching it, tap the poster and click <strong>"Mark Watched & Write Review"</strong>!
+            This show will be saved to your personal Watchlist. Once you finish watching it, tap the poster and click <strong>"Mark Watched & Write Review"</strong>.
           </p>
         </div>
 
         <div class="flex items-center justify-between pt-1">
           <div>
             <span class="text-xs text-gray-400">User: <strong id="postingAsLabel" class="text-white">Guest</strong></span>
-            <span id="postingExpiryNotice" class="block text-[10px] text-amber-400">Friends see this on their feed for 48h, and forever in your Catalogue</span>
           </div>
           <div class="flex gap-2">
             <button type="button" onclick="closeLogModal()" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-300 hover:bg-lbBorder">Cancel</button>
@@ -625,7 +629,7 @@
       <div class="flex items-center justify-between border-b border-lbBorder pb-3 mb-4">
         <h2 class="text-white font-bold text-base flex items-center gap-2">
           <i class="fa-solid fa-user-shield text-lbGreen"></i>
-          <span>User Account & Personal Catalogue</span>
+          <span>User Account & Catalogue</span>
         </h2>
         <button onclick="closeProfileModal()" class="text-gray-400 hover:text-white p-1">
           <i class="fa-solid fa-xmark text-lg"></i>
@@ -644,14 +648,24 @@
             <p id="modalUserEmailOrExpiry" class="text-xs text-gray-400 mt-0.5 truncate">Temporary anonymous account</p>
           </div>
         </div>
-        <button
-          type="button"
-          onclick="closeProfileModal(); openUserCatalogue(currentUser.name);"
-          class="w-full mt-3 bg-lbCard hover:bg-lbBorder text-lbGreen border border-lbBorder text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-1.5"
-        >
-          <i class="fa-solid fa-book-open"></i>
-          <span>View My Full Catalogue</span>
-        </button>
+        <div class="grid grid-cols-2 gap-2 mt-3">
+          <button
+            type="button"
+            onclick="closeProfileModal(); openUserCatalogue(currentUser.name);"
+            class="bg-lbCard hover:bg-lbBorder text-lbGreen border border-lbBorder text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-1.5"
+          >
+            <i class="fa-solid fa-book-open"></i>
+            <span>My Catalogue</span>
+          </button>
+          <button
+            type="button"
+            onclick="shareCatalogueLink(currentUser.name)"
+            class="bg-lbCard hover:bg-lbBorder text-lbBlue border border-lbBorder text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-1.5"
+          >
+            <i class="fa-solid fa-share-nodes"></i>
+            <span>Share My Link</span>
+          </button>
+        </div>
       </div>
 
       <div id="googleSignInSection" class="mb-5">
@@ -748,7 +762,7 @@
     // STATE
     let allReviews = [];
     let activeMainTab = "MY_FEED"; // 'MY_FEED' | 'WATCHLIST' | 'CATALOGUES' | 'ALL_COMMUNITY'
-    let selectedCatalogueUser = null; // null = Directory of all users, string = specific user's name
+    let selectedCatalogueUser = null;
     let catalogueSubTab = "COMPLETED"; // 'COMPLETED' | 'WATCHLIST'
 
     let formEntryStatus = "COMPLETED";
@@ -775,85 +789,6 @@
       expiresAt: Date.now() + THIRTY_DAYS_MS
     };
 
-    // Sample data includes:
-    // 1. Your own review (stays forever on My Feed)
-    // 2. Meera's review from 6 hours ago (<48h, so it appears as FRESH on My Feed)
-    // 3. Arjun's review from 5 days ago (>48h, so it rolls off My Feed into Arjun's Catalogue)
-    const SEED_REVIEWS = [
-      {
-        title: "Interstellar",
-        type: "Movie",
-        year: "2014",
-        language: "English",
-        genres: ["Sci-Fi", "Drama"],
-        coverUrl: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
-        status: "COMPLETED",
-        rating: 5,
-        liked: true,
-        spoiler: false,
-        reviewText: "The docking scene paired with Hans Zimmer's 'No Time for Caution' organ score is pure cinema history.",
-        userName: "Vysakh",
-        userColor: "#059669",
-        isAnonymous: false,
-        expiresAt: null,
-        createdAt: Date.now() - 3600000 * 72 // 3 days ago (Your own review, stays forever)
-      },
-      {
-        title: "Severance",
-        type: "Series",
-        year: "2022",
-        language: "English",
-        genres: ["Sci-Fi", "Thriller", "Mystery"],
-        coverUrl: "https://image.tmdb.org/t/p/w500/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
-        status: "COMPLETED",
-        rating: 5,
-        liked: true,
-        spoiler: true,
-        reviewText: "Just finished the finale 6 hours ago! When Mark shouts 'She's alive!' my heart was racing.",
-        userName: "Meera",
-        userColor: "#db2777",
-        isAnonymous: false,
-        expiresAt: null,
-        createdAt: Date.now() - 3600000 * 6 // 6 hours ago (Fresh <48h friend review!)
-      },
-      {
-        title: "Kumbalangi Nights",
-        type: "Movie",
-        year: "2019",
-        language: "Malayalam",
-        genres: ["Drama", "Romance"],
-        coverUrl: "https://image.tmdb.org/t/p/w500/zM26ba17c2vR24PjK3eF72mR2H1.jpg",
-        status: "COMPLETED",
-        rating: 4.5,
-        liked: true,
-        spoiler: false,
-        reviewText: "Watched this last week. Every frame in Kumbalangi feels alive. (Visible in Arjun's Catalogue!)",
-        userName: "Arjun",
-        userColor: "#2563eb",
-        isAnonymous: false,
-        expiresAt: null,
-        createdAt: Date.now() - 3600000 * 120 // 5 days ago (>48h, archived in Arjun's Catalogue)
-      },
-      {
-        title: "Dune: Part Two",
-        type: "Movie",
-        year: "2024",
-        language: "English",
-        genres: ["Sci-Fi", "Action"],
-        coverUrl: "https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
-        status: "WATCHLIST",
-        rating: 0,
-        liked: false,
-        spoiler: false,
-        reviewText: "",
-        userName: "Vysakh",
-        userColor: "#059669",
-        isAnonymous: false,
-        expiresAt: null,
-        createdAt: Date.now() - 3600000 * 12
-      }
-    ];
-
     function showToast(msg) {
       const toast = document.getElementById("toastBanner");
       document.getElementById("toastText").textContent = msg;
@@ -873,11 +808,58 @@
       return palette[sum % palette.length];
     }
 
-    // Helper: Check if a review belongs to the active user
+    // SHAREABLE FRIEND CATALOGUE LINK (?user=Name)
+    window.shareCatalogueLink = async function (userName) {
+      if (!userName) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set("user", userName);
+      const shareUrl = url.toString();
+
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: `${userName}'s CineBoxd Catalogue`,
+            text: `Check out ${userName}'s watched movies, series, and watchlist on CineBoxd!`,
+            url: shareUrl
+          });
+        } else {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast(`Copied link to ${userName}'s catalogue!`);
+        }
+      } catch (err) {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast(`Copied link to ${userName}'s catalogue!`);
+        } catch (e) {
+          prompt("Copy this shareable catalogue link:", shareUrl);
+        }
+      }
+    };
+
+    function checkUrlForSharedUser() {
+      const params = new URLSearchParams(window.location.search);
+      const sharedUser = params.get("user");
+      if (sharedUser && sharedUser.trim()) {
+        openUserCatalogue(sharedUser.trim(), false);
+      }
+    }
+
+    function updateUrlQueryUser(userName) {
+      try {
+        const url = new URL(window.location.href);
+        if (userName) {
+          url.searchParams.set("user", userName);
+        } else {
+          url.searchParams.delete("user");
+        }
+        window.history.replaceState({}, "", url.toString());
+      } catch (e) {}
+    }
+
+    // Helper: Check if a review/entry belongs to the active user
     function isReviewMine(rev) {
       if (!rev) return false;
       if (rev.userId && currentUser.uid && rev.userId === currentUser.uid) {
-        // Also verify userName match in case sample data was seeded under same uid
         return (rev.userName || "").toLowerCase() === (currentUser.name || "").toLowerCase();
       }
       return (rev.userName || "").toLowerCase() === (currentUser.name || "").toLowerCase();
@@ -902,13 +884,6 @@
       }
       const days = Math.floor(hours / 24);
       return `${days}d ago`;
-    }
-
-    function formatHoursLeftInFeed(createdAt) {
-      const elapsed = Date.now() - Number(createdAt || 0);
-      const remainingMs = Math.max(0, TWO_DAYS_MS - elapsed);
-      const hrsLeft = Math.ceil(remainingMs / (1000 * 60 * 60));
-      return `${hrsLeft}h left in feed`;
     }
 
     // AUTOMATIC POSTER & METADATA SEARCH
@@ -1191,6 +1166,7 @@
       renderGenreFilterBar();
       renderFormGenrePills();
       renderStarSelector();
+      checkUrlForSharedUser();
 
       onAuthStateChanged(auth, (user) => {
         handleAuthUser(user);
@@ -1279,10 +1255,11 @@
     }
 
     // MAIN TAB SWITCHER
-    window.setMainTab = function (tab) {
+    window.setMainTab = function (tab, clearUrlUser = true) {
       activeMainTab = tab;
       if (tab !== "CATALOGUES") {
         selectedCatalogueUser = null;
+        if (clearUrlUser) updateUrlQueryUser(null);
       }
 
       const tabs = [
@@ -1301,7 +1278,6 @@
         }
       });
 
-      // Mobile nav highlights
       document.getElementById("mobNavFeed").className =
         tab === "MY_FEED" ? "flex flex-col items-center gap-0.5 text-lbGreen" : "flex flex-col items-center gap-0.5 text-gray-400";
       document.getElementById("mobNavWatchlist").className =
@@ -1311,31 +1287,32 @@
 
       const explainer = document.getElementById("activeTabExplainer");
       if (tab === "MY_FEED") {
-        explainer.textContent = `Showing ${currentUser.name}'s shows + friends' reviews from the last 48 hours`;
+        explainer.textContent = `Showing ${currentUser.name}'s reviews + recent friend reviews`;
       } else if (tab === "WATCHLIST") {
-        explainer.textContent = "Movies & series saved to Watchlist";
+        explainer.textContent = `${currentUser.name}'s personal Watchlist`;
       } else if (tab === "CATALOGUES") {
-        explainer.textContent = "Browse the complete permanent catalogue of every friend";
+        explainer.textContent = "Browse any friend's completed shows & watchlist";
       } else {
-        explainer.textContent = "Complete archive of all shows ever logged by everyone";
+        explainer.textContent = "All shows logged by the community";
       }
 
       renderApp();
     };
 
     // OPEN / CLOSE A SPECIFIC USER'S FULL CATALOGUE
-    window.openUserCatalogue = function (userName) {
+    window.openUserCatalogue = function (userName, syncUrl = true) {
       if (!userName) return;
       selectedCatalogueUser = userName;
       catalogueSubTab = "COMPLETED";
-      activeMainTab = "CATALOGUES";
-      setMainTab("CATALOGUES");
+      if (syncUrl) updateUrlQueryUser(userName);
+      setMainTab("CATALOGUES", false);
       selectedCatalogueUser = userName;
       renderApp();
     };
 
     window.closeUserCatalogue = function () {
       selectedCatalogueUser = null;
+      updateUrlQueryUser(null);
       renderApp();
     };
 
@@ -1505,7 +1482,7 @@
       return html;
     }
 
-    // RENDER 48-HOUR FRESH FROM FRIENDS SPOTLIGHT STRIP
+    // RENDER FRESH FROM FRIENDS SPOTLIGHT STRIP
     function renderFreshFromFriendsStrip() {
       const stripSection = document.getElementById("freshFriendsSection");
       const stripContainer = document.getElementById("freshFriendsStrip");
@@ -1548,7 +1525,7 @@
                   <span class="text-[10px] text-lbGreen font-bold ml-auto">${Number(r.rating).toFixed(1)}★</span>
                 </div>
                 <p class="text-gray-200 text-xs font-semibold truncate mt-0.5">${r.title}</p>
-                <span class="text-[10px] text-amber-400 block">${formatRelativeTime(r.createdAt)} • ${formatHoursLeftInFeed(r.createdAt)}</span>
+                <span class="text-[10px] text-gray-400 block">${formatRelativeTime(r.createdAt)}</span>
               </div>
             </div>
           `;
@@ -1563,17 +1540,20 @@
       const allShows = getGroupedShows(allReviews);
       const userSummaries = getUserCataloguesSummary();
 
-      // Calculate My Feed count (Shows I reviewed OR Shows with a friend's review <48h old)
+      // My Feed: Shows I reviewed permanently + Shows with a friend's review <48h old
       const myFeedShows = allShows.filter((show) =>
         show.completedReviews.some((r) => isReviewMine(r) || isWithin48Hours(r.createdAt))
       );
-      const myWatchlistShows = allShows.filter((show) =>
-        show.watchlistEntries.some((r) => isReviewMine(r) || isWithin48Hours(r.createdAt))
+
+      // My Watchlist: ONLY the currently logged-in user's watch-later shows
+      const myOwnWatchlistShows = allShows.filter((show) =>
+        show.watchlistEntries.some((r) => isReviewMine(r))
       );
+
       const communityShows = allShows.filter((show) => show.completedReviews.length > 0);
 
       document.getElementById("badgeMyFeedCount").textContent = myFeedShows.length;
-      document.getElementById("badgeWatchlistCount").textContent = myWatchlistShows.length;
+      document.getElementById("badgeWatchlistCount").textContent = myOwnWatchlistShows.length;
       document.getElementById("badgeUsersCount").textContent = userSummaries.length;
       document.getElementById("badgeCommunityCount").textContent = communityShows.length;
 
@@ -1585,7 +1565,7 @@
       const posterGrid = document.getElementById("posterGrid");
       const emptyState = document.getElementById("emptyState");
 
-      // CASE 1: FRIENDS' CATALOGUES DIRECTORY VIEW (When no specific user is clicked)
+      // CASE 1: FRIENDS' CATALOGUES DIRECTORY VIEW
       if (activeMainTab === "CATALOGUES" && !selectedCatalogueUser) {
         standardFilters.classList.add("hidden");
         userCatHeader.classList.add("hidden");
@@ -1602,7 +1582,7 @@
           usersGrid.innerHTML = `
             <div class="col-span-full text-center py-12 bg-lbCard/50 rounded-xl border border-lbBorder">
               <p class="text-white font-bold">No friend catalogues yet</p>
-              <p class="text-xs text-gray-400 mt-1">Click "Load Samples" or log a show to create your catalogue.</p>
+              <p class="text-xs text-gray-400 mt-1">Log a movie or series to create your catalogue.</p>
             </div>
           `;
           return;
@@ -1639,10 +1619,17 @@
                         <strong class="text-lbGreen">${avg}★</strong> Avg
                       </p>
                     </div>
-                    <i class="fa-solid fa-chevron-right text-gray-500 text-xs"></i>
+                    <button
+                      type="button"
+                      onclick="event.stopPropagation(); shareCatalogueLink('${u.name.replace(/'/g, "\\'")}')"
+                      class="text-gray-400 hover:text-lbBlue p-2 rounded-lg hover:bg-[#14181c]"
+                      title="Share ${u.name}'s catalogue link"
+                    >
+                      <i class="fa-solid fa-share-nodes text-xs"></i>
+                    </button>
                   </div>
 
-                  <!-- Mini Poster Strip Preview of Their Catalogue -->
+                  <!-- Mini Poster Strip Preview -->
                   <div class="grid grid-cols-4 gap-2 mt-4">
                     ${
                       recentPosters.length > 0
@@ -1661,7 +1648,7 @@
                 </div>
 
                 <div class="mt-3 pt-2.5 border-t border-lbBorder flex items-center justify-between text-[11px]">
-                  <span class="text-gray-400">Last active ${formatRelativeTime(u.latestActivity)}</span>
+                  <span class="text-gray-400">Active ${formatRelativeTime(u.latestActivity)}</span>
                   <span class="text-lbGreen font-bold">Open Catalogue →</span>
                 </div>
               </div>
@@ -1671,7 +1658,7 @@
         return;
       }
 
-      // CASE 2: SHOWING A POSTER GRID (My Feed 48h, Watchlist, Specific Friend's Catalogue, or All Community)
+      // CASE 2: SHOWING A POSTER GRID
       usersGrid.classList.add("hidden");
       usersGrid.classList.remove("grid");
       standardFilters.classList.remove("hidden");
@@ -1679,7 +1666,6 @@
       let workingShows = [];
 
       if (activeMainTab === "CATALOGUES" && selectedCatalogueUser) {
-        // Viewing a specific user's complete permanent catalogue
         userCatHeader.classList.remove("hidden");
         const targetLower = selectedCatalogueUser.toLowerCase();
         const userEntries = allReviews.filter(
@@ -1696,7 +1682,7 @@
           : "0.0";
 
         document.getElementById("catalogueUserName").textContent = `${selectedCatalogueUser}'s Catalogue`;
-        document.getElementById("catalogueUserStats").textContent = `${completedCount} Completed Shows • ${watchlistCount} On Watchlist • ${avgScore}★ Average Rating`;
+        document.getElementById("catalogueUserStats").textContent = `${completedCount} Completed Shows • ${watchlistCount} On Watchlist • ${avgScore}★ Average`;
 
         const sampleColor = userEntries[0]?.userColor || pickColorForName(selectedCatalogueUser);
         document.getElementById("catalogueUserAvatarBox").innerHTML = `<span style="background-color:${sampleColor}" class="w-11 h-11 rounded-full text-base font-black text-white flex items-center justify-center">${selectedCatalogueUser[0].toUpperCase()}</span>`;
@@ -1710,17 +1696,14 @@
       } else {
         userCatHeader.classList.add("hidden");
         if (activeMainTab === "MY_FEED") {
-          // 48-HOUR RULE: Keep shows that I reviewed permanently, OR shows reviewed by a friend within the last 48 hours
           workingShows = myFeedShows;
         } else if (activeMainTab === "WATCHLIST") {
-          workingShows = myWatchlistShows;
+          workingShows = myOwnWatchlistShows;
         } else {
-          // ALL_COMMUNITY
           workingShows = communityShows;
         }
       }
 
-      // Apply Media, Language, Genre & Search Filters
       const filtered = workingShows.filter((show) => {
         if (activeMediaFilter !== "ALL" && show.type !== activeMediaFilter) return false;
         if (activeLanguageFilter !== "ALL" && (show.language || "English") !== activeLanguageFilter) return false;
@@ -1738,7 +1721,6 @@
         return true;
       });
 
-      // Sort
       filtered.sort((a, b) => {
         const avgA = a.completedReviews.length
           ? a.completedReviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / a.completedReviews.length
@@ -1759,6 +1741,18 @@
 
       if (filtered.length === 0) {
         posterGrid.innerHTML = "";
+        document.getElementById("emptyStateIcon").className =
+          activeMainTab === "WATCHLIST"
+            ? "fa-solid fa-bookmark text-4xl text-lbBlue mb-3"
+            : "fa-solid fa-film text-4xl text-gray-500 mb-3";
+        document.getElementById("emptyStateTitle").textContent =
+          activeMainTab === "WATCHLIST"
+            ? "Your Watchlist is empty"
+            : "No shows in this view yet";
+        document.getElementById("emptyStateSub").textContent =
+          activeMainTab === "WATCHLIST"
+            ? "Save movies or series you plan to watch here. You can view your friends' watchlists inside Friends' Catalogues."
+            : "Log a movie or series you completed, or check Friends' Catalogues to see reviews from your group.";
         emptyState.classList.remove("hidden");
         return;
       }
@@ -1767,7 +1761,6 @@
 
       posterGrid.innerHTML = filtered
         .map((show) => {
-          // On My Feed, only display visible reviews (Mine + Friends <48h), whereas in Catalogues/Community show all
           const relevantReviews =
             activeMainTab === "MY_FEED"
               ? show.completedReviews.filter((r) => isReviewMine(r) || isWithin48Hours(r.createdAt))
@@ -1784,11 +1777,11 @@
             (r) => !isReviewMine(r) && isWithin48Hours(r.createdAt)
           );
 
-          // 48h Status Pill for My Feed
+          // Clean relative timestamp pill on My Feed (e.g. "10h ago")
           let feedStatusPill = "";
           if (activeMainTab === "MY_FEED") {
             if (freshFriendRev && !hasMyReview) {
-              feedStatusPill = `<span class="bg-lbGreen text-black text-[9px] font-black px-1.5 py-0.5 rounded shadow">NEW • ${formatHoursLeftInFeed(freshFriendRev.createdAt)}</span>`;
+              feedStatusPill = `<span class="bg-lbGreen text-black text-[9px] font-black px-1.5 py-0.5 rounded shadow">${formatRelativeTime(freshFriendRev.createdAt)}</span>`;
             } else if (hasMyReview) {
               feedStatusPill = `<span class="bg-black/80 text-lbGreen border border-lbGreen/40 text-[9px] font-bold px-1.5 py-0.5 rounded">My Diary</span>`;
             }
@@ -2008,10 +2001,6 @@
       listEl.innerHTML = show.completedReviews
         .map((r) => {
           const relTime = formatRelativeTime(r.createdAt);
-          const freshBadge =
-            !isReviewMine(r) && isWithin48Hours(r.createdAt)
-              ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-lbGreen border border-lbGreen/30 font-bold">Fresh • ${formatHoursLeftInFeed(r.createdAt)}</span>`
-              : "";
 
           const avatarHTML = r.userPhoto
             ? `<img src="${r.userPhoto}" class="w-6 h-6 rounded-full object-cover" />`
@@ -2047,7 +2036,6 @@
                     ${avatarHTML}
                     <span class="text-white font-bold text-xs">${r.userName}</span>
                   </button>
-                  ${freshBadge}
                   <div class="text-xs flex items-center gap-0.5 ml-1">
                     ${renderStarsHTML(r.rating)}
                   </div>
@@ -2093,11 +2081,11 @@
       if (useLocalStorageFallback) {
         allReviews.unshift({ ...payload, id: "local_" + now });
         saveFallbackLocal();
-        showToast(`Added "${show.title}" to Watchlist!`);
+        showToast(`Added "${show.title}" to My Watchlist!`);
       } else {
         try {
           await addDoc(reviewsCollectionRef, payload);
-          showToast(`Added "${show.title}" to Watchlist!`);
+          showToast(`Added "${show.title}" to My Watchlist!`);
         } catch (err) {
           alert("Could not save to Firestore.");
         }
@@ -2307,7 +2295,7 @@
           showToast("Entry updated!");
         } else {
           allReviews.unshift({ ...payload, id: "local_" + now, createdAt: now });
-          showToast(formEntryStatus === "WATCHLIST" ? "Saved to Watchlist!" : "Added to your Diary & Friends' 48h Feed!");
+          showToast(formEntryStatus === "WATCHLIST" ? "Saved to My Watchlist!" : "Review saved!");
         }
         saveFallbackLocal();
       } else {
@@ -2317,7 +2305,7 @@
             showToast("Entry updated!");
           } else {
             await addDoc(reviewsCollectionRef, { ...payload, createdAt: now });
-            showToast(formEntryStatus === "WATCHLIST" ? "Saved to Watchlist!" : "Added to your Diary & Friends' 48h Feed!");
+            showToast(formEntryStatus === "WATCHLIST" ? "Saved to My Watchlist!" : "Review saved!");
           }
         } catch (err) {
           alert("Could not save to Firestore. Check your Firebase Console Firestore Rules.");
@@ -2336,32 +2324,6 @@
           showToast("Entry deleted");
         } catch (err) {
           alert("You can only delete your own entries.");
-        }
-      }
-    };
-
-    window.seedSampleShows = async function () {
-      if (useLocalStorageFallback) {
-        for (const item of SEED_REVIEWS) {
-          allReviews.push({
-            ...item,
-            userId: currentUser.uid,
-            id: "seed_" + Math.random().toString(36).slice(2)
-          });
-        }
-        saveFallbackLocal();
-        showToast("Loaded sample 48h & archived friend shows!");
-      } else {
-        try {
-          for (const item of SEED_REVIEWS) {
-            await addDoc(reviewsCollectionRef, {
-              ...item,
-              userId: currentUser.uid
-            });
-          }
-          showToast("Loaded sample 48h & archived friend shows!");
-        } catch (err) {
-          console.error("Failed to seed sample shows:", err);
         }
       }
     };
@@ -2391,6 +2353,7 @@
       activeLanguageFilter = "ALL";
       activeGenreFilter = "ALL";
       selectedCatalogueUser = null;
+      updateUrlQueryUser(null);
       renderGenreFilterBar();
       setMediaFilter("ALL");
       setMainTab("MY_FEED");
