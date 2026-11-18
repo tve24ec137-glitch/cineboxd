@@ -507,12 +507,12 @@
         </button>
       </div>
 
-      <!-- AUTOMATIC POSTER & METADATA SEARCH BOX (Movies + TV Series) -->
+      <!-- AUTOMATIC TMDB POSTER & METADATA SEARCH BOX -->
       <div id="autoSearchContainer" class="mb-4 bg-[#14181c] p-3 rounded-xl border border-lbBorder">
         <div class="flex items-center justify-between mb-1.5">
           <label class="text-[11px] font-bold uppercase tracking-wider text-lbBlue flex items-center gap-1.5">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>Auto-Search Movies & Series</span>
+            <span>TMDB Auto-Search Movies & Series</span>
           </label>
           <span class="text-[10px] text-gray-400">Or enter manually below ↓</span>
         </div>
@@ -521,7 +521,7 @@
           <input
             id="apiSearchInput"
             type="text"
-            placeholder="Search movie or series (e.g. Avengers, Interstellar, Premalu)..."
+            placeholder="Search movie or series (e.g. Avengers, Aavesham, Severance)..."
             oninput="handleAutoSearchInput(this.value)"
             class="w-full bg-lbCard text-white text-xs sm:text-sm pl-3 pr-9 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbBlue"
           />
@@ -530,7 +530,7 @@
           </span>
         </div>
 
-        <div id="apiSearchResults" class="hidden mt-2 max-h-52 overflow-y-auto divide-y divide-lbBorder rounded-lg border border-lbBorder bg-lbCard"></div>
+        <div id="apiSearchResults" class="hidden mt-2 max-h-56 overflow-y-auto divide-y divide-lbBorder rounded-lg border border-lbBorder bg-lbCard"></div>
       </div>
 
       <!-- SHOW METADATA FORM -->
@@ -571,6 +571,7 @@
           <div id="duplicateMergeList" class="space-y-1.5"></div>
         </div>
 
+        <!-- Language & Cover Poster URL with TMDB "Find Poster" Recovery Button -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end">
           <div>
             <label class="block text-xs font-semibold text-gray-300 mb-1">Language *</label>
@@ -587,20 +588,32 @@
               <option value="Other">Other</option>
             </select>
           </div>
-          <div class="sm:col-span-2 flex items-center gap-2.5">
-            <div class="flex-1">
-              <label class="block text-xs font-semibold text-gray-300 mb-1">Cover Poster URL (Auto-fills or paste link)</label>
+          <div class="sm:col-span-2 flex items-center gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs font-semibold text-gray-300">Cover Poster URL</label>
+                <button
+                  type="button"
+                  id="findPosterManualBtn"
+                  onclick="findMissingPosterForTitle()"
+                  class="text-[10px] font-bold text-lbBlue hover:underline flex items-center gap-1"
+                  title="Search TMDB for a poster matching the title above"
+                >
+                  <i class="fa-solid fa-image"></i>
+                  <span>Find Poster</span>
+                </button>
+              </div>
               <input
                 id="inputCover"
                 type="url"
                 oninput="updateFormPosterPreview()"
-                placeholder="Leaves clean title poster if blank"
+                placeholder="Auto-fills via TMDB or paste link"
                 class="w-full bg-[#14181c] text-white text-sm px-3 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbGreen"
               />
             </div>
             <img
               id="formPosterPreview"
-              src="https://placehold.co/80x120/1f262d/00e054?text=Poster"
+              src=""
               alt="Preview"
               class="w-10 h-14 rounded object-cover border border-lbBorder shrink-0 mt-4 bg-[#14181c]"
             />
@@ -875,6 +888,54 @@
       measurementId: "G-KTXGHR18HS"
     };
 
+    // TMDB API CREDENTIALS
+    const TMDB_API_KEY = "391bb8ad29e1f08796e1c4ee566dc406";
+    const TMDB_READ_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzOTFiYjhhZDI5ZTFmMDg3OTZlMWM0ZWU1NjZkYzQwNiIsIm5iZiI6MTc5NTAyMDU0MS4xNDUsInN1YiI6IjZhZmRkNmZkNTU1NGZlMjU3NTgxYjVhNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.s4TnbBkBCPG4cLshRTnqzCMKl7mwzz5BcEPF2QosEXs";
+
+    // TMDB GENRE ID TO CINEBOXD GENRE MAP
+    const TMDB_GENRE_MAP = {
+      28: "Action",
+      12: "Adventure",
+      16: "Animation",
+      35: "Comedy",
+      80: "Crime",
+      99: "Documentary",
+      18: "Drama",
+      10751: "Family",
+      14: "Fantasy",
+      36: "History",
+      27: "Horror",
+      10402: "Music",
+      9648: "Mystery",
+      10749: "Romance",
+      878: "Sci-Fi",
+      10770: "TV Movie",
+      53: "Thriller",
+      10752: "War",
+      37: "Western",
+      10759: "Action",
+      10762: "Family",
+      10763: "Documentary",
+      10764: "Reality-TV",
+      10765: "Sci-Fi",
+      10766: "Drama",
+      10767: "Comedy",
+      10768: "War"
+    };
+
+    // TMDB ISO LANGUAGE CODE TO CINEBOXD LANGUAGE MAP
+    const TMDB_LANG_MAP = {
+      en: "English",
+      ml: "Malayalam",
+      hi: "Hindi",
+      ta: "Tamil",
+      te: "Telugu",
+      ko: "Korean",
+      ja: "Japanese",
+      es: "Spanish",
+      fr: "French"
+    };
+
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
     const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 
@@ -971,6 +1032,45 @@
         .replace(/\b(the|a|an)\b/g, "")
         .replace(/\s+/g, "")
         .trim();
+    }
+
+    // CUSTOM STYLED SVG POSTER GENERATOR (When no online poster exists)
+    function getFallbackPoster(title, year = "") {
+      const cleanTitle = (title || "Untitled").slice(0, 34);
+      const words = cleanTitle.split(" ");
+      let line1 = "";
+      let line2 = "";
+      for (const w of words) {
+        if ((line1 + " " + w).trim().length <= 16) {
+          line1 = (line1 + " " + w).trim();
+        } else if ((line2 + " " + w).trim().length <= 16) {
+          line2 = (line2 + " " + w).trim();
+        }
+      }
+      const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 600'>
+        <defs>
+          <linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'>
+            <stop offset='0%' stop-color='#26303a'/>
+            <stop offset='100%' stop-color='#14181c'/>
+          </linearGradient>
+        </defs>
+        <rect width='400' height='600' fill='url(#bg)'/>
+        <rect x='18' y='18' width='364' height='564' rx='14' fill='none' stroke='#2c3440' stroke-width='2'/>
+        <circle cx='176' cy='210' r='10' fill='#ff8000'/>
+        <circle cx='200' cy='210' r='10' fill='#00e054'/>
+        <circle cx='224' cy='210' r='10' fill='#40bcf4'/>
+        <text x='200' y='285' fill='#ffffff' font-family='sans-serif' font-size='28' font-weight='800' text-anchor='middle'>${esc(line1)}</text>
+        ${line2 ? `<text x='200' y='322' fill='#ffffff' font-family='sans-serif' font-size='28' font-weight='800' text-anchor='middle'>${esc(line2)}</text>` : ""}
+        ${year ? `<text x='200' y='370' fill='#00e054' font-family='sans-serif' font-size='18' font-weight='700' text-anchor='middle'>${esc(String(year))}</text>` : ""}
+        <text x='200' y='545' fill='#566575' font-family='sans-serif' font-size='12' font-weight='700' letter-spacing='3' text-anchor='middle'>CINEBOXD</text>
+      </svg>`;
+      return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+    }
+
+    function isCustomPlaceholderUrl(url) {
+      if (!url) return true;
+      return url.startsWith("data:image/svg+xml") || url.includes("placehold.co");
     }
 
     window.shareCatalogueLink = async function (userName) {
@@ -1082,7 +1182,7 @@
             class="w-full flex items-center justify-between gap-2 bg-[#14181c] hover:bg-lbBorder px-2.5 py-1.5 rounded-lg border border-lbBorder text-left transition"
           >
             <div class="flex items-center gap-2 min-w-0">
-              <img src="${m.coverUrl || getFallbackPoster(m.title)}" class="w-6 h-9 rounded object-cover shrink-0" />
+              <img src="${m.coverUrl || getFallbackPoster(m.title, m.year)}" class="w-6 h-9 rounded object-cover shrink-0" />
               <div class="min-w-0">
                 <span class="text-white font-bold text-xs truncate block">${m.title} ${m.year ? `(${m.year})` : ""}</span>
                 <span class="text-[10px] text-gray-400">${m.type} • ${m.language} • ${m.completedReviews.length + m.watchlistEntries.length} entries</span>
@@ -1104,7 +1204,7 @@
       document.getElementById("inputType").value = match.type || "Movie";
       document.getElementById("inputYear").value = match.year || new Date().getFullYear();
       document.getElementById("inputLanguage").value = match.language || "English";
-      document.getElementById("inputCover").value = match.coverUrl || "";
+      document.getElementById("inputCover").value = isCustomPlaceholderUrl(match.coverUrl) ? "" : match.coverUrl;
       selectedFormGenres = match.genres && match.genres.length ? [...match.genres] : ["Drama"];
       renderFormGenrePills();
       updateFormPosterPreview();
@@ -1112,7 +1212,7 @@
       showToast(`Linked to "${match.title}"`);
     };
 
-    // AUTOMATIC POSTER & METADATA SEARCH
+    // AUTOMATIC TMDB POSTER & METADATA SEARCH
     window.handleAutoSearchInput = function (query) {
       clearTimeout(searchDebounceTimer);
       const resultsBox = document.getElementById("apiSearchResults");
@@ -1128,202 +1228,146 @@
       spinner.classList.remove("hidden");
       searchDebounceTimer = setTimeout(() => {
         performMetadataLookup(trimmed);
-      }, 380);
+      }, 320);
     };
 
-    function mapExternalGenres(rawGenres = []) {
-      const matched = [];
-      const joined = rawGenres.join(" ").toLowerCase();
-
-      const rules = [
-        { key: "action", label: "Action" },
-        { key: "adventure", label: "Adventure" },
-        { key: "animation", label: "Animation" },
-        { key: "anime", label: "Anime" },
-        { key: "biography", label: "Biography" },
-        { key: "comedy", label: "Comedy" },
-        { key: "crime", label: "Crime" },
-        { key: "documentary", label: "Documentary" },
-        { key: "drama", label: "Drama" },
-        { key: "family", label: "Family" },
-        { key: "kids", label: "Family" },
-        { key: "fantasy", label: "Fantasy" },
-        { key: "noir", label: "Film-Noir" },
-        { key: "game", label: "Game-Show" },
-        { key: "history", label: "History" },
-        { key: "historical", label: "History" },
-        { key: "horror", label: "Horror" },
-        { key: "musical", label: "Musical" },
-        { key: "music", label: "Music" },
-        { key: "mystery", label: "Mystery" },
-        { key: "reality", label: "Reality-TV" },
-        { key: "romance", label: "Romance" },
-        { key: "sci-fi", label: "Sci-Fi" },
-        { key: "science fiction", label: "Sci-Fi" },
-        { key: "short", label: "Short" },
-        { key: "sport", label: "Sport" },
-        { key: "thriller", label: "Thriller" },
-        { key: "suspense", label: "Thriller" },
-        { key: "war", label: "War" },
-        { key: "western", label: "Western" }
-      ];
-
-      for (const r of rules) {
-        if (joined.includes(r.key) && !matched.includes(r.label)) {
-          matched.push(r.label);
+    function mapTmdbGenres(genreIds = [], origLang = "") {
+      const mapped = [];
+      if (origLang === "ja" && genreIds.includes(16)) {
+        mapped.push("Anime");
+      }
+      for (const id of genreIds) {
+        const g = TMDB_GENRE_MAP[id];
+        if (g && !mapped.includes(g)) {
+          mapped.push(g);
         }
       }
-
-      return matched.length ? matched.slice(0, 3) : ["Drama"];
+      return mapped.length ? mapped.slice(0, 3) : ["Drama"];
     }
 
-    // 1. CORS-Enabled IMDb Movie & Series Search API (Pure JSON)
-    async function fetchMoviesFromImdbMirror(query) {
+    // Primary TMDB Multi-Search Lookup (Movies + TV Series with Official Posters)
+    async function fetchFromTmdbMulti(query) {
       try {
-        const res = await fetch(`https://imdb.iamidiotareyoutoo.com/search?q=${encodeURIComponent(query)}`);
+        const url = `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&include_adult=false&page=1`;
+        const res = await fetch(url, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${TMDB_READ_TOKEN}`
+          }
+        });
         if (!res.ok) return [];
         const data = await res.json();
-        const list = Array.isArray(data?.description) ? data.description : [];
-        return list.map((item) => {
-          const title = item["#TITLE"] || "";
-          const year = item["#YEAR"] ? String(item["#YEAR"]) : "";
-          const poster = item["#IMG_POSTER"] || "";
-          return {
-            title,
-            type: "Movie",
-            year,
-            language: "English",
-            genres: ["Action", "Drama"],
-            coverUrl: poster
-          };
-        }).filter((m) => m.title);
-      } catch (e) {
-        return [];
-      }
-    }
+        const results = Array.isArray(data?.results) ? data.results : [];
 
-    // 2. Backup CORS-Enabled Wikipedia Film Lookup (Guarantees movie results even if mirror is slow)
-    async function fetchMoviesFromWikipedia(query) {
-      try {
-        const searchTerm = `${query} film`;
-        const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(searchTerm)}&gsrlimit=6&prop=pageimages|extracts&exintro=1&explaintext=1&exsentences=2&piprop=thumbnail&pithumbsize=500&format=json&origin=*`;
-        const res = await fetch(url);
-        if (!res.ok) return [];
-        const data = await res.json();
-        const pages = data?.query?.pages ? Object.values(data.query.pages) : [];
-
-        return pages
-          .filter((p) => {
-            const text = `${p.title} ${p.extract || ""}`.toLowerCase();
-            return (
-              text.includes("film") ||
-              text.includes("movie") ||
-              text.includes("directed by")
-            ) && !text.includes("television series") && !text.includes("tv series");
-          })
-          .map((p) => {
-            // Clean "(2012 film)" or "(film)" from Wikipedia page titles
-            const yearMatch = p.title.match(/\((\d{4})\s*film\)/i) || (p.extract || "").match(/\b(19\d{2}|20[0-2]\d)\b/);
-            const cleanTitle = p.title.replace(/\s*\((?:\d{4}\s*)?film\)/i, "").trim();
-            const extractLow = (p.extract || "").toLowerCase();
-
-            let lang = "English";
-            if (extractLow.includes("malayalam")) lang = "Malayalam";
-            else if (extractLow.includes("hindi")) lang = "Hindi";
-            else if (extractLow.includes("tamil")) lang = "Tamil";
-            else if (extractLow.includes("telugu")) lang = "Telugu";
-            else if (extractLow.includes("korean") || extractLow.includes("south korean")) lang = "Korean";
-            else if (extractLow.includes("japanese")) lang = "Japanese";
-            else if (extractLow.includes("spanish")) lang = "Spanish";
-            else if (extractLow.includes("french")) lang = "French";
+        return results
+          .filter((item) => item.media_type === "movie" || item.media_type === "tv")
+          .map((item) => {
+            const isTv = item.media_type === "tv";
+            const title = (isTv ? item.name || item.original_name : item.title || item.original_title) || "";
+            const dateStr = (isTv ? item.first_air_date : item.release_date) || "";
+            const year = dateStr ? dateStr.slice(0, 4) : "";
+            const posterPath = item.poster_path || item.backdrop_path || "";
+            const coverUrl = posterPath ? `https://image.tmdb.org/t/p/w500${posterPath}` : "";
+            const language = TMDB_LANG_MAP[item.original_language] || "Other";
+            const genres = mapTmdbGenres(item.genre_ids || [], item.original_language);
 
             return {
-              title: cleanTitle,
-              type: "Movie",
-              year: yearMatch ? yearMatch[1] : "",
-              language: lang,
-              genres: mapExternalGenres([p.extract || "Drama"]),
-              coverUrl: p.thumbnail?.source || ""
+              title: title.trim(),
+              type: isTv ? "Series" : "Movie",
+              year,
+              language,
+              genres,
+              coverUrl
             };
-          });
+          })
+          .filter((item) => item.title);
       } catch (e) {
         return [];
       }
     }
+
+    // Fallback Wikipedia Poster Lookup (Only if a rare title has no TMDB poster)
+    async function fetchSinglePosterFromWikipedia(title, year = "", type = "Movie") {
+      try {
+        const suffix = type === "Series" ? "TV series" : "film";
+        const searchTerm = `${title} ${year} ${suffix}`.trim();
+        const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(searchTerm)}&gsrlimit=3&prop=pageimages&piprop=thumbnail&pithumbsize=500&format=json&origin=*`;
+        const res = await fetch(url);
+        if (!res.ok) return "";
+        const data = await res.json();
+        const pages = data?.query?.pages ? Object.values(data.query.pages) : [];
+        pages.sort((a, b) => (a.index || 99) - (b.index || 99));
+        const withImg = pages.find((p) => p.thumbnail?.source);
+        return withImg ? withImg.thumbnail.source : "";
+      } catch (e) {
+        return "";
+      }
+    }
+
+    // Helper: Find a single show's poster from TMDB first, then Wikipedia fallback
+    async function findBestPosterUrl(title, year = "", type = "Movie") {
+      const tmdbList = await fetchFromTmdbMulti(title);
+      if (tmdbList.length > 0) {
+        const exactWithPoster = tmdbList.find(
+          (item) => item.coverUrl && (!year || item.year === String(year))
+        );
+        if (exactWithPoster) return exactWithPoster.coverUrl;
+        const anyWithPoster = tmdbList.find((item) => item.coverUrl);
+        if (anyWithPoster) return anyWithPoster.coverUrl;
+      }
+      return await fetchSinglePosterFromWikipedia(title, year, type);
+    }
+
+    // Manual/One-Tap "Find Poster" Recovery Button inside Log Modal
+    window.findMissingPosterForTitle = async function () {
+      const title = document.getElementById("inputTitle").value.trim();
+      const year = document.getElementById("inputYear").value.trim();
+      const type = document.getElementById("inputType").value;
+      if (!title) {
+        showToast("Enter a show title first!");
+        return;
+      }
+
+      const btn = document.getElementById("findPosterManualBtn");
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Searching TMDB...</span>';
+
+      const foundUrl = await findBestPosterUrl(title, year, type);
+      btn.innerHTML = '<i class="fa-solid fa-image"></i><span>Find Poster</span>';
+
+      if (foundUrl) {
+        document.getElementById("inputCover").value = foundUrl;
+        updateFormPosterPreview();
+        showToast(`Found official poster for "${title}"!`);
+      } else {
+        showToast("No poster found online — custom title poster will be used.");
+      }
+    };
 
     async function performMetadataLookup(query) {
       const spinner = document.getElementById("apiSearchSpinner");
       const resultsBox = document.getElementById("apiSearchResults");
 
       try {
-        const encoded = encodeURIComponent(query);
-        const [imdbMovies, wikiMovies, tvmazeRes] = await Promise.all([
-          fetchMoviesFromImdbMirror(query),
-          fetchMoviesFromWikipedia(query),
-          fetch(`https://api.tvmaze.com/search/shows?q=${encoded}`)
-            .then((r) => (r.ok ? r.json() : []))
-            .catch(() => [])
-        ]);
+        const tmdbItems = await fetchFromTmdbMulti(query);
 
-        const combined = [];
-        const seenKeys = new Set();
+        // Recover any missing poster on top 8 results from Wikipedia if needed
+        const topSlice = tmdbItems.slice(0, 8);
+        await Promise.all(
+          topSlice.map(async (item) => {
+            if (!item.coverUrl) {
+              const recovered = await fetchSinglePosterFromWikipedia(item.title, item.year, item.type);
+              if (recovered) item.coverUrl = recovered;
+            }
+          })
+        );
 
-        // 1. Add Movies from IMDb Mirror
-        imdbMovies.forEach((m) => {
-          const key = `${m.title.toLowerCase()}_${m.year}`;
-          if (seenKeys.has(key)) return;
-          seenKeys.add(key);
-          combined.push(m);
-        });
-
-        // 2. Add Movies from Wikipedia Backup (fills gaps & regional films)
-        wikiMovies.forEach((m) => {
-          const existing = combined.find((c) => c.title.toLowerCase() === m.title.toLowerCase());
-          if (existing) {
-            if (!existing.coverUrl && m.coverUrl) existing.coverUrl = m.coverUrl;
-            if (!existing.year && m.year) existing.year = m.year;
-            if (m.language !== "English") existing.language = m.language;
-            if (m.genres.length) existing.genres = m.genres;
-            return;
-          }
-          const key = `${m.title.toLowerCase()}_${m.year}`;
-          if (seenKeys.has(key)) return;
-          seenKeys.add(key);
-          combined.push(m);
-        });
-
-        // 3. Add TV Series from TVMaze
-        if (Array.isArray(tvmazeRes)) {
-          tvmazeRes.slice(0, 4).forEach((entry) => {
-            const s = entry.show;
-            if (!s || !s.name) return;
-            const releaseYear = s.premiered ? s.premiered.slice(0, 4) : "";
-            const key = `${s.name.toLowerCase()}_${releaseYear}_series`;
-            if (seenKeys.has(key)) return;
-            seenKeys.add(key);
-
-            const poster = s.image ? s.image.original || s.image.medium : "";
-            const supportedLangs = ["English", "Malayalam", "Hindi", "Tamil", "Telugu", "Korean", "Japanese", "Spanish", "French"];
-            const lang = supportedLangs.includes(s.language) ? s.language : "English";
-
-            combined.push({
-              title: s.name,
-              type: "Series",
-              year: releaseYear,
-              language: lang,
-              genres: mapExternalGenres([...(s.genres || []), s.type || ""]),
-              coverUrl: poster
-            });
-          });
-        }
-
-        latestSearchResults = combined.slice(0, 10);
+        latestSearchResults = topSlice;
         spinner.classList.add("hidden");
 
         if (latestSearchResults.length === 0) {
           resultsBox.innerHTML = `
             <div class="p-3 text-xs text-gray-400 flex items-center justify-between">
-              <span>No exact match found. Enter details manually below!</span>
+              <span>No exact match on TMDB. Enter details manually below!</span>
               <button type="button" onclick="useQueryAsManualTitle()" class="text-lbGreen font-bold hover:underline">Use "${query}"</button>
             </div>
           `;
@@ -1340,9 +1384,9 @@
               class="w-full p-2.5 hover:bg-[#14181c] flex items-center gap-3 text-left transition"
             >
               <img
-                src="${item.coverUrl || getFallbackPoster(item.title)}"
+                src="${item.coverUrl || getFallbackPoster(item.title, item.year)}"
                 alt="${item.title}"
-                onerror="this.src='${getFallbackPoster(item.title)}'"
+                onerror="this.src='${getFallbackPoster(item.title, item.year)}'"
                 class="w-9 h-13 rounded object-cover border border-lbBorder bg-[#14181c] shrink-0"
               />
               <div class="flex-1 min-w-0">
@@ -1399,7 +1443,12 @@
     window.updateFormPosterPreview = function () {
       const url = document.getElementById("inputCover").value.trim();
       const title = document.getElementById("inputTitle").value.trim() || "Poster";
-      document.getElementById("formPosterPreview").src = url || getFallbackPoster(title);
+      const year = document.getElementById("inputYear").value.trim();
+      const preview = document.getElementById("formPosterPreview");
+      preview.onerror = () => {
+        preview.src = getFallbackPoster(title, year);
+      };
+      preview.src = url || getFallbackPoster(title, year);
     };
 
     // QUICK REVIEW & WATCHLIST REACTIONS
@@ -1809,7 +1858,11 @@
           });
         }
         const group = map.get(key);
-        if (!group.coverUrl && rev.coverUrl) group.coverUrl = rev.coverUrl;
+        if ((!group.coverUrl || isCustomPlaceholderUrl(group.coverUrl)) && rev.coverUrl && !isCustomPlaceholderUrl(rev.coverUrl)) {
+          group.coverUrl = rev.coverUrl;
+        } else if (!group.coverUrl && rev.coverUrl) {
+          group.coverUrl = rev.coverUrl;
+        }
         if (!group.year && rev.year) group.year = rev.year;
         if (!group.language && rev.language) group.language = rev.language;
         if (Array.isArray(rev.genres)) {
@@ -1854,11 +1907,6 @@
         }
       }
       return Array.from(userMap.values()).sort((a, b) => b.latestActivity - a.latestActivity);
-    }
-
-    function getFallbackPoster(title) {
-      const encoded = encodeURIComponent(title || "Show");
-      return `https://placehold.co/400x600/1f262d/00e054?text=${encoded}`;
     }
 
     function renderStarsHTML(rating) {
@@ -1908,7 +1956,8 @@
               class="flex items-center gap-2.5 bg-[#14181c] hover:bg-lbBorder/70 border border-lbBorder rounded-lg p-2 cursor-pointer shrink-0 w-64 transition"
             >
               <img
-                src="${r.coverUrl || getFallbackPoster(r.title)}"
+                src="${r.coverUrl || getFallbackPoster(r.title, r.year)}"
+                onerror="this.src='${getFallbackPoster(r.title, r.year)}'"
                 class="w-10 h-14 rounded object-cover shrink-0 border border-lbBorder"
               />
               <div class="flex-1 min-w-0">
@@ -2081,7 +2130,12 @@
                             .map(
                               (r) => `
                               <div class="aspect-[2/3] rounded overflow-hidden border border-lbBorder bg-[#14181c]">
-                                <img src="${r.coverUrl || getFallbackPoster(r.title)}" class="w-full h-full object-cover" title="${r.title} (${r.rating}★)" />
+                                <img
+                                  src="${r.coverUrl || getFallbackPoster(r.title, r.year)}"
+                                  onerror="this.src='${getFallbackPoster(r.title, r.year)}'"
+                                  class="w-full h-full object-cover"
+                                  title="${r.title} (${r.rating}★)"
+                                />
                               </div>
                             `
                             )
@@ -2183,7 +2237,7 @@
             ? displayReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / displayReviews.length
             : 0;
 
-          const cover = show.coverUrl || getFallbackPoster(show.title);
+          const cover = show.coverUrl || getFallbackPoster(show.title, show.year);
           const hasMyReview = show.completedReviews.some((r) => isReviewMine(r));
           const freshFriendRev = show.completedReviews.find(
             (r) => !isReviewMine(r) && isWithin48Hours(r.createdAt)
@@ -2228,7 +2282,7 @@
                   src="${cover}"
                   alt="${show.title}"
                   loading="lazy"
-                  onerror="this.src='${getFallbackPoster(show.title)}'"
+                  onerror="this.src='${getFallbackPoster(show.title, show.year)}'"
                   class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                 />
                 <div class="absolute top-2 inset-x-2 flex items-center justify-between gap-1 pointer-events-none">
@@ -2312,9 +2366,14 @@
         ? show.completedReviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) /
           show.completedReviews.length
         : 0;
-      const cover = show.coverUrl || getFallbackPoster(show.title);
+      const cover = show.coverUrl || getFallbackPoster(show.title, show.year);
 
-      document.getElementById("detailCover").src = cover;
+      const coverEl = document.getElementById("detailCover");
+      coverEl.onerror = () => {
+        coverEl.src = getFallbackPoster(show.title, show.year);
+      };
+      coverEl.src = cover;
+
       document.getElementById("detailTypeBadge").textContent = show.type;
       document.getElementById("detailTypeBadgeMobile").textContent = show.type;
       document.getElementById("detailLangBadge").textContent = show.language || "English";
@@ -2517,7 +2576,7 @@
         language: show.language || "English",
         genres: show.genres || ["Drama"],
         year: show.year || "",
-        coverUrl: show.coverUrl || getFallbackPoster(show.title),
+        coverUrl: show.coverUrl || getFallbackPoster(show.title, show.year),
         status: "WATCHLIST",
         rating: 0,
         liked: false,
@@ -2602,7 +2661,7 @@
         document.getElementById("inputType").value = reviewToEdit.type || "Movie";
         document.getElementById("inputLanguage").value = reviewToEdit.language || "English";
         document.getElementById("inputYear").value = reviewToEdit.year || new Date().getFullYear();
-        document.getElementById("inputCover").value = reviewToEdit.coverUrl || "";
+        document.getElementById("inputCover").value = isCustomPlaceholderUrl(reviewToEdit.coverUrl) ? "" : (reviewToEdit.coverUrl || "");
         document.getElementById("inputReview").value = reviewToEdit.reviewText || "";
         document.getElementById("inputSpoiler").checked = Boolean(reviewToEdit.spoiler);
         selectedRating = Number(reviewToEdit.rating) || 5;
@@ -2616,7 +2675,7 @@
         document.getElementById("inputType").value = prefillShow.type || "Movie";
         document.getElementById("inputLanguage").value = prefillShow.language || "English";
         document.getElementById("inputYear").value = prefillShow.year || new Date().getFullYear();
-        document.getElementById("inputCover").value = prefillShow.coverUrl || "";
+        document.getElementById("inputCover").value = isCustomPlaceholderUrl(prefillShow.coverUrl) ? "" : (prefillShow.coverUrl || "");
         document.getElementById("inputReview").value = "";
         document.getElementById("inputSpoiler").checked = false;
         selectedRating = 5;
@@ -2714,12 +2773,24 @@
       const type = document.getElementById("inputType").value;
       const language = document.getElementById("inputLanguage").value;
       const year = document.getElementById("inputYear").value.trim();
-      const coverUrl = document.getElementById("inputCover").value.trim() || getFallbackPoster(title);
+      let coverUrl = document.getElementById("inputCover").value.trim();
       const reviewText = document.getElementById("inputReview").value.trim();
       const spoiler = document.getElementById("inputSpoiler").checked;
 
       if (!title) return;
       if (formEntryStatus === "COMPLETED" && !reviewText) return;
+
+      const submitBtn = document.getElementById("submitReviewBtn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving...";
+
+      // Automatic last-chance TMDB + Wikipedia poster recovery if coverUrl is blank
+      if (!coverUrl) {
+        const recovered = await findBestPosterUrl(title, year, type);
+        coverUrl = recovered || getFallbackPoster(title, year);
+      }
+
+      submitBtn.disabled = false;
 
       const now = Date.now();
       const payload = {
