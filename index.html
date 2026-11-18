@@ -507,12 +507,12 @@
         </button>
       </div>
 
-      <!-- AUTOMATIC POSTER & METADATA SEARCH BOX -->
+      <!-- AUTOMATIC POSTER & METADATA SEARCH BOX (IMDb Movies + TVMaze Series) -->
       <div id="autoSearchContainer" class="mb-4 bg-[#14181c] p-3 rounded-xl border border-lbBorder">
         <div class="flex items-center justify-between mb-1.5">
           <label class="text-[11px] font-bold uppercase tracking-wider text-lbBlue flex items-center gap-1.5">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>Auto-Search Poster & Release Year</span>
+            <span>Auto-Search Movies & Series</span>
           </label>
           <span class="text-[10px] text-gray-400">Or enter manually below ↓</span>
         </div>
@@ -521,7 +521,7 @@
           <input
             id="apiSearchInput"
             type="text"
-            placeholder="Type movie or series (e.g. Interstellar, Severance, Premalu)..."
+            placeholder="Search movie or series (e.g. Avengers, Interstellar, Severance)..."
             oninput="handleAutoSearchInput(this.value)"
             class="w-full bg-lbCard text-white text-xs sm:text-sm pl-3 pr-9 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbBlue"
           />
@@ -1131,7 +1131,6 @@
       }, 380);
     };
 
-    // Maps external iTunes & TVMaze genres onto all 27 IMDb + Letterboxd genres
     function mapExternalGenres(rawGenres = []) {
       const matched = [];
       const joined = rawGenres.join(" ").toLowerCase();
@@ -1178,52 +1177,111 @@
       return matched.length ? matched.slice(0, 3) : ["Drama"];
     }
 
+    // CORS-SAFE IMDB JSONP AUTOCOMPLETE (Bypasses browser CORS blocks on GitHub Pages)
+    function fetchImdbSuggestions(query) {
+      return new Promise((resolve) => {
+        const clean = query.toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (!clean) return resolve([]);
+        const firstChar = clean[0];
+        const callbackName = "imdb_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+        const script = document.createElement("script");
+        const timeout = setTimeout(() => {
+          cleanup();
+          resolve([]);
+        }, 3500);
+
+        function cleanup() {
+          clearTimeout(timeout);
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[callbackName] = function (data) {
+          cleanup();
+          resolve(Array.isArray(data?.d) ? data.d : []);
+        };
+
+        script.src = `https://v3.sg.media-imdb.com/suggestion/${firstChar}/${encodeURIComponent(query)}.json?callback=${callbackName}`;
+        script.onerror = () => {
+          cleanup();
+          resolve([]);
+        };
+        document.head.appendChild(script);
+      });
+    }
+
     async function performMetadataLookup(query) {
       const spinner = document.getElementById("apiSearchSpinner");
       const resultsBox = document.getElementById("apiSearchResults");
 
       try {
         const encoded = encodeURIComponent(query);
-        const [itunesRes, tvmazeRes] = await Promise.allSettled([
-          fetch(`https://itunes.apple.com/search?term=${encoded}&media=movie&limit=5`).then((r) => r.json()),
-          fetch(`https://api.tvmaze.com/search/shows?q=${encoded}`).then((r) => r.json())
+        const [imdbItems, tvmazeRes] = await Promise.all([
+          fetchImdbSuggestions(query),
+          fetch(`https://api.tvmaze.com/search/shows?q=${encoded}`)
+            .then((r) => (r.ok ? r.json() : []))
+            .catch(() => [])
         ]);
 
         const combined = [];
+        const seenTitles = new Set();
 
-        if (itunesRes.status === "fulfilled" && Array.isArray(itunesRes.value.results)) {
-          itunesRes.value.results.forEach((m) => {
-            if (!m.trackName) return;
-            const hiResPoster = m.artworkUrl100
-              ? m.artworkUrl100.replace("100x100bb", "600x900bb")
-              : "";
-            const releaseYear = m.releaseDate ? m.releaseDate.slice(0, 4) : "";
-            combined.push({
-              title: m.trackName,
-              type: "Movie",
-              year: releaseYear,
-              language: "English",
-              genres: mapExternalGenres([m.primaryGenreName || "Drama"]),
-              coverUrl: hiResPoster
-            });
+        // 1. Parse Movies & Series from IMDb Suggestions
+        imdbItems.forEach((item) => {
+          if (!item.l || !item.id || !item.id.startsWith("tt")) return;
+          const qType = (item.qid || item.q || "").toLowerCase();
+          if (qType.includes("game") || qType.includes("episode")) return;
+
+          const isSeries = qType.includes("tv") || qType.includes("series") || qType.includes("mini");
+          const mediaType = isSeries ? "Series" : "Movie";
+          const releaseYear = item.y ? String(item.y) : "";
+          const key = `${item.l.toLowerCase()}_${releaseYear}`;
+          if (seenTitles.has(key)) return;
+          seenTitles.add(key);
+
+          let posterUrl = "";
+          if (item.i && item.i.imageUrl) {
+            posterUrl = item.i.imageUrl.replace(/\._V1_.*\.jpg$/, "._V1_UX500_.jpg");
+          }
+
+          combined.push({
+            title: item.l,
+            type: mediaType,
+            year: releaseYear,
+            language: "English",
+            genres: ["Action", "Drama"],
+            coverUrl: posterUrl
           });
-        }
+        });
 
-        if (tvmazeRes.status === "fulfilled" && Array.isArray(tvmazeRes.value)) {
-          tvmazeRes.value.slice(0, 5).forEach((item) => {
-            const s = item.show;
+        // 2. Parse TV Series from TVMaze (adds accurate genres & language for shows)
+        if (Array.isArray(tvmazeRes)) {
+          tvmazeRes.slice(0, 5).forEach((entry) => {
+            const s = entry.show;
             if (!s || !s.name) return;
-            const poster = s.image ? s.image.original || s.image.medium : "";
             const releaseYear = s.premiered ? s.premiered.slice(0, 4) : "";
+            const key = `${s.name.toLowerCase()}_${releaseYear}`;
+            const poster = s.image ? s.image.original || s.image.medium : "";
             const supportedLangs = ["English", "Malayalam", "Hindi", "Tamil", "Telugu", "Korean", "Japanese", "Spanish", "French"];
             const lang = supportedLangs.includes(s.language) ? s.language : "English";
-            const extraTypes = s.type ? [s.type] : [];
+
+            const existing = combined.find((c) => c.title.toLowerCase() === s.name.toLowerCase() && c.type === "Series");
+            if (existing) {
+              existing.genres = mapExternalGenres([...(s.genres || []), s.type || ""]);
+              existing.language = lang;
+              if (!existing.coverUrl && poster) existing.coverUrl = poster;
+              return;
+            }
+
+            if (seenTitles.has(key)) return;
+            seenTitles.add(key);
+
             combined.push({
               title: s.name,
               type: "Series",
               year: releaseYear,
               language: lang,
-              genres: mapExternalGenres([...(s.genres || []), ...extraTypes]),
+              genres: mapExternalGenres([...(s.genres || []), s.type || ""]),
               coverUrl: poster
             });
           });
@@ -1254,6 +1312,7 @@
               <img
                 src="${item.coverUrl || getFallbackPoster(item.title)}"
                 alt="${item.title}"
+                onerror="this.src='${getFallbackPoster(item.title)}'"
                 class="w-9 h-13 rounded object-cover border border-lbBorder bg-[#14181c] shrink-0"
               />
               <div class="flex-1 min-w-0">
@@ -1262,7 +1321,7 @@
                   ${item.year ? `<span class="text-[11px] font-bold text-amber-400 shrink-0">(${item.year})</span>` : ""}
                 </div>
                 <div class="flex items-center gap-1.5 mt-0.5">
-                  <span class="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-lbBorder text-lbBlue">${item.type}</span>
+                  <span class="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded ${item.type === "Movie" ? "bg-emerald-950 text-lbGreen" : "bg-lbBorder text-lbBlue"}">${item.type}</span>
                   <span class="text-[10px] text-gray-400">${item.language}</span>
                   <span class="text-[10px] text-gray-500 truncate">• ${item.genres.join(", ")}</span>
                 </div>
