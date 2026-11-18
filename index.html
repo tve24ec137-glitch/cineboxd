@@ -507,7 +507,7 @@
         </button>
       </div>
 
-      <!-- AUTOMATIC POSTER & METADATA SEARCH BOX (IMDb Movies + TVMaze Series) -->
+      <!-- AUTOMATIC POSTER & METADATA SEARCH BOX (Movies + TV Series) -->
       <div id="autoSearchContainer" class="mb-4 bg-[#14181c] p-3 rounded-xl border border-lbBorder">
         <div class="flex items-center justify-between mb-1.5">
           <label class="text-[11px] font-bold uppercase tracking-wider text-lbBlue flex items-center gap-1.5">
@@ -521,7 +521,7 @@
           <input
             id="apiSearchInput"
             type="text"
-            placeholder="Search movie or series (e.g. Avengers, Interstellar, Severance)..."
+            placeholder="Search movie or series (e.g. Avengers, Interstellar, Premalu)..."
             oninput="handleAutoSearchInput(this.value)"
             class="w-full bg-lbCard text-white text-xs sm:text-sm pl-3 pr-9 py-2 rounded-lg border border-lbBorder focus:outline-none focus:border-lbBlue"
           />
@@ -1177,37 +1177,78 @@
       return matched.length ? matched.slice(0, 3) : ["Drama"];
     }
 
-    // CORS-SAFE IMDB JSONP AUTOCOMPLETE (Bypasses browser CORS blocks on GitHub Pages)
-    function fetchImdbSuggestions(query) {
-      return new Promise((resolve) => {
-        const clean = query.toLowerCase().replace(/[^a-z0-9]/g, "");
-        if (!clean) return resolve([]);
-        const firstChar = clean[0];
-        const callbackName = "imdb_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-        const script = document.createElement("script");
-        const timeout = setTimeout(() => {
-          cleanup();
-          resolve([]);
-        }, 3500);
+    // 1. CORS-Enabled IMDb Movie & Series Search API (Pure JSON)
+    async function fetchMoviesFromImdbMirror(query) {
+      try {
+        const res = await fetch(`https://imdb.iamidiotareyoutoo.com/search?q=${encodeURIComponent(query)}`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        const list = Array.isArray(data?.description) ? data.description : [];
+        return list.map((item) => {
+          const title = item["#TITLE"] || "";
+          const year = item["#YEAR"] ? String(item["#YEAR"]) : "";
+          const poster = item["#IMG_POSTER"] || "";
+          return {
+            title,
+            type: "Movie",
+            year,
+            language: "English",
+            genres: ["Action", "Drama"],
+            coverUrl: poster
+          };
+        }).filter((m) => m.title);
+      } catch (e) {
+        return [];
+      }
+    }
 
-        function cleanup() {
-          clearTimeout(timeout);
-          delete window[callbackName];
-          if (script.parentNode) script.parentNode.removeChild(script);
-        }
+    // 2. Backup CORS-Enabled Wikipedia Film Lookup (Guarantees movie results even if mirror is slow)
+    async function fetchMoviesFromWikipedia(query) {
+      try {
+        const searchTerm = `${query} film`;
+        const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(searchTerm)}&gsrlimit=6&prop=pageimages|extracts&exintro=1&explaintext=1&exsentences=2&piprop=thumbnail&pithumbsize=500&format=json&origin=*`;
+        const res = await fetch(url);
+        if (!res.ok) return [];
+        const data = await res.json();
+        const pages = data?.query?.pages ? Object.values(data.query.pages) : [];
 
-        window[callbackName] = function (data) {
-          cleanup();
-          resolve(Array.isArray(data?.d) ? data.d : []);
-        };
+        return pages
+          .filter((p) => {
+            const text = `${p.title} ${p.extract || ""}`.toLowerCase();
+            return (
+              text.includes("film") ||
+              text.includes("movie") ||
+              text.includes("directed by")
+            ) && !text.includes("television series") && !text.includes("tv series");
+          })
+          .map((p) => {
+            // Clean "(2012 film)" or "(film)" from Wikipedia page titles
+            const yearMatch = p.title.match(/\((\d{4})\s*film\)/i) || (p.extract || "").match(/\b(19\d{2}|20[0-2]\d)\b/);
+            const cleanTitle = p.title.replace(/\s*\((?:\d{4}\s*)?film\)/i, "").trim();
+            const extractLow = (p.extract || "").toLowerCase();
 
-        script.src = `https://v3.sg.media-imdb.com/suggestion/${firstChar}/${encodeURIComponent(query)}.json?callback=${callbackName}`;
-        script.onerror = () => {
-          cleanup();
-          resolve([]);
-        };
-        document.head.appendChild(script);
-      });
+            let lang = "English";
+            if (extractLow.includes("malayalam")) lang = "Malayalam";
+            else if (extractLow.includes("hindi")) lang = "Hindi";
+            else if (extractLow.includes("tamil")) lang = "Tamil";
+            else if (extractLow.includes("telugu")) lang = "Telugu";
+            else if (extractLow.includes("korean") || extractLow.includes("south korean")) lang = "Korean";
+            else if (extractLow.includes("japanese")) lang = "Japanese";
+            else if (extractLow.includes("spanish")) lang = "Spanish";
+            else if (extractLow.includes("french")) lang = "French";
+
+            return {
+              title: cleanTitle,
+              type: "Movie",
+              year: yearMatch ? yearMatch[1] : "",
+              language: lang,
+              genres: mapExternalGenres([p.extract || "Drama"]),
+              coverUrl: p.thumbnail?.source || ""
+            };
+          });
+      } catch (e) {
+        return [];
+      }
     }
 
     async function performMetadataLookup(query) {
@@ -1216,65 +1257,54 @@
 
       try {
         const encoded = encodeURIComponent(query);
-        const [imdbItems, tvmazeRes] = await Promise.all([
-          fetchImdbSuggestions(query),
+        const [imdbMovies, wikiMovies, tvmazeRes] = await Promise.all([
+          fetchMoviesFromImdbMirror(query),
+          fetchMoviesFromWikipedia(query),
           fetch(`https://api.tvmaze.com/search/shows?q=${encoded}`)
             .then((r) => (r.ok ? r.json() : []))
             .catch(() => [])
         ]);
 
         const combined = [];
-        const seenTitles = new Set();
+        const seenKeys = new Set();
 
-        // 1. Parse Movies & Series from IMDb Suggestions
-        imdbItems.forEach((item) => {
-          if (!item.l || !item.id || !item.id.startsWith("tt")) return;
-          const qType = (item.qid || item.q || "").toLowerCase();
-          if (qType.includes("game") || qType.includes("episode")) return;
-
-          const isSeries = qType.includes("tv") || qType.includes("series") || qType.includes("mini");
-          const mediaType = isSeries ? "Series" : "Movie";
-          const releaseYear = item.y ? String(item.y) : "";
-          const key = `${item.l.toLowerCase()}_${releaseYear}`;
-          if (seenTitles.has(key)) return;
-          seenTitles.add(key);
-
-          let posterUrl = "";
-          if (item.i && item.i.imageUrl) {
-            posterUrl = item.i.imageUrl.replace(/\._V1_.*\.jpg$/, "._V1_UX500_.jpg");
-          }
-
-          combined.push({
-            title: item.l,
-            type: mediaType,
-            year: releaseYear,
-            language: "English",
-            genres: ["Action", "Drama"],
-            coverUrl: posterUrl
-          });
+        // 1. Add Movies from IMDb Mirror
+        imdbMovies.forEach((m) => {
+          const key = `${m.title.toLowerCase()}_${m.year}`;
+          if (seenKeys.has(key)) return;
+          seenKeys.add(key);
+          combined.push(m);
         });
 
-        // 2. Parse TV Series from TVMaze (adds accurate genres & language for shows)
+        // 2. Add Movies from Wikipedia Backup (fills gaps & regional films)
+        wikiMovies.forEach((m) => {
+          const existing = combined.find((c) => c.title.toLowerCase() === m.title.toLowerCase());
+          if (existing) {
+            if (!existing.coverUrl && m.coverUrl) existing.coverUrl = m.coverUrl;
+            if (!existing.year && m.year) existing.year = m.year;
+            if (m.language !== "English") existing.language = m.language;
+            if (m.genres.length) existing.genres = m.genres;
+            return;
+          }
+          const key = `${m.title.toLowerCase()}_${m.year}`;
+          if (seenKeys.has(key)) return;
+          seenKeys.add(key);
+          combined.push(m);
+        });
+
+        // 3. Add TV Series from TVMaze
         if (Array.isArray(tvmazeRes)) {
-          tvmazeRes.slice(0, 5).forEach((entry) => {
+          tvmazeRes.slice(0, 4).forEach((entry) => {
             const s = entry.show;
             if (!s || !s.name) return;
             const releaseYear = s.premiered ? s.premiered.slice(0, 4) : "";
-            const key = `${s.name.toLowerCase()}_${releaseYear}`;
+            const key = `${s.name.toLowerCase()}_${releaseYear}_series`;
+            if (seenKeys.has(key)) return;
+            seenKeys.add(key);
+
             const poster = s.image ? s.image.original || s.image.medium : "";
             const supportedLangs = ["English", "Malayalam", "Hindi", "Tamil", "Telugu", "Korean", "Japanese", "Spanish", "French"];
             const lang = supportedLangs.includes(s.language) ? s.language : "English";
-
-            const existing = combined.find((c) => c.title.toLowerCase() === s.name.toLowerCase() && c.type === "Series");
-            if (existing) {
-              existing.genres = mapExternalGenres([...(s.genres || []), s.type || ""]);
-              existing.language = lang;
-              if (!existing.coverUrl && poster) existing.coverUrl = poster;
-              return;
-            }
-
-            if (seenTitles.has(key)) return;
-            seenTitles.add(key);
 
             combined.push({
               title: s.name,
@@ -1287,7 +1317,7 @@
           });
         }
 
-        latestSearchResults = combined.slice(0, 8);
+        latestSearchResults = combined.slice(0, 10);
         spinner.classList.add("hidden");
 
         if (latestSearchResults.length === 0) {
