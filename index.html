@@ -216,7 +216,7 @@
       <div class="flex items-center justify-between lg:justify-end gap-3">
         <span id="activeTabExplainer" class="text-xs text-gray-400">Your reviews + recent activity from friends</span>
 
-        <!-- Watchlist Roulette Random Picker (Visible when viewing Watchlist) -->
+        <!-- Watchlist Roulette Random Picker -->
         <button
           id="watchlistRouletteBtn"
           onclick="pickRandomWatchlistShow()"
@@ -258,7 +258,7 @@
         </select>
       </div>
 
-      <!-- Horizontal Swipeable Genre Pills -->
+      <!-- Horizontal Swipeable Genre Pills (27 IMDb + Letterboxd Genres) -->
       <div id="genreFilterBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1.5 border-b border-lbBorder"></div>
     </div>
   </section>
@@ -607,9 +607,10 @@
           </div>
         </div>
 
+        <!-- Multi-Select Genre Tags (All 27 IMDb + Letterboxd Genres) -->
         <div>
-          <label class="block text-xs font-semibold text-gray-300 mb-1.5">Genres (Tap up to 3):</label>
-          <div id="formGenrePills" class="flex flex-wrap gap-1.5"></div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1.5">Genres — IMDb & Letterboxd Catalog (Tap up to 3):</label>
+          <div id="formGenrePills" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-[#14181c] rounded-lg border border-lbBorder"></div>
         </div>
 
         <div id="completedRatingSection" class="space-y-3.5">
@@ -876,9 +877,36 @@
 
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
     const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+
+    // COMPLETE COMBINED LIST OF ALL 27 GENRES FROM LETTERBOXD & IMDb
     const ALL_GENRES = [
-      "Sci-Fi", "Thriller", "Drama", "Action", "Comedy",
-      "Crime", "Mystery", "Romance", "Horror", "Anime", "Fantasy"
+      "Action",
+      "Adventure",
+      "Animation",
+      "Anime",
+      "Biography",
+      "Comedy",
+      "Crime",
+      "Documentary",
+      "Drama",
+      "Family",
+      "Fantasy",
+      "Film-Noir",
+      "Game-Show",
+      "History",
+      "Horror",
+      "Music",
+      "Musical",
+      "Mystery",
+      "Reality-TV",
+      "Romance",
+      "Sci-Fi",
+      "Short",
+      "Sport",
+      "Thriller",
+      "TV Movie",
+      "War",
+      "Western"
     ];
 
     const app = initializeApp(firebaseConfig);
@@ -889,7 +917,7 @@
 
     // STATE
     let allReviews = [];
-    let activeMainTab = "MY_FEED"; // 'MY_FEED' | 'WATCHLIST' | 'CATALOGUES' | 'ALL_COMMUNITY'
+    let activeMainTab = "MY_FEED";
     let selectedCatalogueUser = null;
     let catalogueSubTab = "COMPLETED";
 
@@ -936,7 +964,6 @@
       return palette[sum % palette.length];
     }
 
-    // NORMALIZED SHOW KEY FOR DUPLICATE MERGING (e.g. "Spider-Man: Across" == "spiderman across")
     function normalizeShowKey(title) {
       return (title || "")
         .toLowerCase()
@@ -946,7 +973,6 @@
         .trim();
     }
 
-    // SHAREABLE FRIEND CATALOGUE LINK (?user=Name)
     window.shareCatalogueLink = async function (userName) {
       if (!userName) return;
       const url = new URL(window.location.href);
@@ -1022,7 +1048,6 @@
       return `${days}d ago`;
     }
 
-    // DUPLICATE SHOW MERGING & TITLE AUTO-COMPLETE
     window.handleTitleDuplicateCheck = function (typedValue) {
       const box = document.getElementById("duplicateMergeBox");
       const list = document.getElementById("duplicateMergeList");
@@ -1106,20 +1131,50 @@
       }, 380);
     };
 
+    // Maps external iTunes & TVMaze genres onto all 27 IMDb + Letterboxd genres
     function mapExternalGenres(rawGenres = []) {
       const matched = [];
       const joined = rawGenres.join(" ").toLowerCase();
-      if (joined.includes("sci-fi") || joined.includes("science fiction")) matched.push("Sci-Fi");
-      if (joined.includes("thriller") || joined.includes("suspense")) matched.push("Thriller");
-      if (joined.includes("drama")) matched.push("Drama");
-      if (joined.includes("action") || joined.includes("adventure")) matched.push("Action");
-      if (joined.includes("comedy")) matched.push("Comedy");
-      if (joined.includes("crime")) matched.push("Crime");
-      if (joined.includes("mystery")) matched.push("Mystery");
-      if (joined.includes("romance")) matched.push("Romance");
-      if (joined.includes("horror")) matched.push("Horror");
-      if (joined.includes("anime") || joined.includes("animation")) matched.push("Anime");
-      if (joined.includes("fantasy")) matched.push("Fantasy");
+
+      const rules = [
+        { key: "action", label: "Action" },
+        { key: "adventure", label: "Adventure" },
+        { key: "animation", label: "Animation" },
+        { key: "anime", label: "Anime" },
+        { key: "biography", label: "Biography" },
+        { key: "comedy", label: "Comedy" },
+        { key: "crime", label: "Crime" },
+        { key: "documentary", label: "Documentary" },
+        { key: "drama", label: "Drama" },
+        { key: "family", label: "Family" },
+        { key: "kids", label: "Family" },
+        { key: "fantasy", label: "Fantasy" },
+        { key: "noir", label: "Film-Noir" },
+        { key: "game", label: "Game-Show" },
+        { key: "history", label: "History" },
+        { key: "historical", label: "History" },
+        { key: "horror", label: "Horror" },
+        { key: "musical", label: "Musical" },
+        { key: "music", label: "Music" },
+        { key: "mystery", label: "Mystery" },
+        { key: "reality", label: "Reality-TV" },
+        { key: "romance", label: "Romance" },
+        { key: "sci-fi", label: "Sci-Fi" },
+        { key: "science fiction", label: "Sci-Fi" },
+        { key: "short", label: "Short" },
+        { key: "sport", label: "Sport" },
+        { key: "thriller", label: "Thriller" },
+        { key: "suspense", label: "Thriller" },
+        { key: "war", label: "War" },
+        { key: "western", label: "Western" }
+      ];
+
+      for (const r of rules) {
+        if (joined.includes(r.key) && !matched.includes(r.label)) {
+          matched.push(r.label);
+        }
+      }
+
       return matched.length ? matched.slice(0, 3) : ["Drama"];
     }
 
@@ -1162,12 +1217,13 @@
             const releaseYear = s.premiered ? s.premiered.slice(0, 4) : "";
             const supportedLangs = ["English", "Malayalam", "Hindi", "Tamil", "Telugu", "Korean", "Japanese", "Spanish", "French"];
             const lang = supportedLangs.includes(s.language) ? s.language : "English";
+            const extraTypes = s.type ? [s.type] : [];
             combined.push({
               title: s.name,
               type: "Series",
               year: releaseYear,
               language: lang,
-              genres: mapExternalGenres(s.genres || []),
+              genres: mapExternalGenres([...(s.genres || []), ...extraTypes]),
               coverUrl: poster
             });
           });
@@ -1257,7 +1313,7 @@
       document.getElementById("formPosterPreview").src = url || getFallbackPoster(title);
     };
 
-    // QUICK REVIEW & WATCHLIST REACTIONS (❤️ Love & 🔥 Agree)
+    // QUICK REVIEW & WATCHLIST REACTIONS
     window.toggleReaction = async function (reviewId, type) {
       const target = allReviews.find((r) => r.id === reviewId);
       if (!target) return;
@@ -1286,7 +1342,7 @@
       }
     };
 
-    // WATCHLIST ROULETTE ("What Should We Watch Tonight?")
+    // WATCHLIST ROULETTE
     window.pickRandomWatchlistShow = function () {
       const pool = getFilteredShowsForCurrentView();
       if (pool.length === 0) {
@@ -1552,7 +1608,6 @@
       renderApp();
     };
 
-    // OPEN / CLOSE A SPECIFIC USER'S FULL CATALOGUE
     window.openUserCatalogue = function (userName, syncUrl = true) {
       if (!userName) return;
       selectedCatalogueUser = userName;
@@ -1582,14 +1637,13 @@
       renderApp();
     };
 
-    // GENRE FILTER BAR & FORM PILLS
     function renderGenreFilterBar() {
       const bar = document.getElementById("genreFilterBar");
       const items = ["ALL", ...ALL_GENRES];
       bar.innerHTML = items
         .map((g) => {
           const active = activeGenreFilter === g;
-          const label = g === "ALL" ? "All Genres" : g;
+          const label = g === "ALL" ? "All Genres (27)" : g;
           return `
             <button
               onclick="setGenreFilter('${g}')"
@@ -1646,7 +1700,6 @@
       renderFormGenrePills();
     };
 
-    // GROUP ENTRIES BY NORMALIZED SHOW KEY (MERGES DUPLICATES AUTOMATICALLY)
     function getGroupedShows(sourceReviews = allReviews) {
       const map = new Map();
       for (const rev of sourceReviews) {
@@ -1784,7 +1837,6 @@
         .join("");
     }
 
-    // HELPER TO GET FILTERED SHOWS FOR CURRENT VIEW (Used by Grid & Watchlist Roulette)
     function getFilteredShowsForCurrentView() {
       const searchVal = (document.getElementById("searchInput").value || "").toLowerCase().trim();
       const allShows = getGroupedShows(allReviews);
@@ -1831,7 +1883,6 @@
       });
     }
 
-    // MAIN RENDER FUNCTION
     window.renderApp = function () {
       const searchVal = (document.getElementById("searchInput").value || "").toLowerCase().trim();
       const sortMode = document.getElementById("sortSelect").value;
@@ -1851,7 +1902,6 @@
       document.getElementById("badgeUsersCount").textContent = userSummaries.length;
       document.getElementById("badgeCommunityCount").textContent = communityShows.length;
 
-      // Show/Hide Watchlist Roulette Dice Button
       const isWatchlistMode =
         activeMainTab === "WATCHLIST" ||
         (activeMainTab === "CATALOGUES" && selectedCatalogueUser && catalogueSubTab === "WATCHLIST");
@@ -1872,7 +1922,6 @@
       const posterGrid = document.getElementById("posterGrid");
       const emptyState = document.getElementById("emptyState");
 
-      // CASE 1: FRIENDS' CATALOGUES DIRECTORY VIEW
       if (activeMainTab === "CATALOGUES" && !selectedCatalogueUser) {
         standardFilters.classList.add("hidden");
         userCatHeader.classList.add("hidden");
@@ -1964,7 +2013,6 @@
         return;
       }
 
-      // CASE 2: SHOWING A POSTER GRID
       usersGrid.classList.add("hidden");
       usersGrid.classList.remove("grid");
       standardFilters.classList.remove("hidden");
@@ -2239,7 +2287,6 @@
         watchBtn.onclick = () => quickAddShowToWatchlist(show);
       }
 
-      // Watchlist Friends & Quick Hype Reaction
       const wlBar = document.getElementById("detailWatchlistBar");
       const wlUsers = document.getElementById("detailWatchlistUsers");
       if (show.watchlistEntries.length > 0) {
@@ -2341,7 +2388,6 @@
               ${spoilerWarning}
               <p class="text-gray-200 text-xs sm:text-sm leading-relaxed whitespace-pre-line ${r.spoiler ? "spoiler-blur" : ""}">${r.reviewText}</p>
 
-              <!-- Quick Reaction Pills -->
               <div class="flex items-center gap-2 mt-2.5 pt-2 border-t border-lbBorder/60">
                 <button
                   type="button"
